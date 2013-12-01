@@ -1,5 +1,7 @@
-#include "mouse_handling_rev.hpp"
+#include "mousehandle.hpp"
 #include "sysdraw.hpp"
+
+#include <iostream>
 
 void moushandl_clbck::mouseclick_callback(int but, int state, int x, int y){
   MouseHandle->MouseClick(but,state,x,y);
@@ -50,27 +52,28 @@ void mouse_handle::MouseMotion(int x, int y)
   const int  width = glutGet(GLUT_WINDOW_WIDTH);
   const int  height = glutGet(GLUT_WINDOW_HEIGHT);
   if (but == 1){
-      double dx = double (x-x_bef);
-      double dy = double (y-y_bef);
-      double theta_u = dx * 0.005;
-      double theta_w = -dy * 0.005;
+    double dx = double (x-x_bef);
+    double dy = double (y-y_bef);
+    double theta_u = dx * 0.005;
+    double theta_w = -dy * 0.005;
       
-      double vec_u[3] = {ebase_z[0],ebase_z[1],ebase_z[2]};
-      double vec_w[3] = {0.0, 0.0, 0.0};
+    double vec_u[3] = {ebase_z[0],ebase_z[1],ebase_z[2]};
+    double vec_w[3] = {0.0, 0.0, 0.0};
 
-      CrossProduct(center2eye,vec_u,vec_w);
+    CrossProduct(center2eye,vec_u,vec_w);
 
-      RotPersVect(center2eye, vec_u, theta_u);
-      RotPersVect(center2eye, vec_w, theta_w);
-      RotPersVect(ebase_z,vec_w, theta_w);
+    RotPersVect(center2eye, vec_u, theta_u);
+    RotPersVect(center2eye, vec_w, theta_w);
+    RotPersVect(ebase_z,vec_w, theta_w);
 
-      drwsys_clbck::resize_callback(width,height);
-    }
+    drwsys_clbck::resize_callback(width,height);
+  }
 }
 
 void mouse_handle::MouseWheel(int wheel_n,int direct,int x,int y){
   const int  width = glutGet(GLUT_WINDOW_WIDTH);
   const int  height = glutGet(GLUT_WINDOW_HEIGHT);
+  std::cout << wheel_n << " " << direct << std::endl;
   fovy -= direct*1.5;
   drwsys_clbck::resize_callback(width,height);
 }

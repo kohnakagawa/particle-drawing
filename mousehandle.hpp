@@ -35,7 +35,10 @@ public:
     persCenter[2] = center_z;
     
     fovy = fov;
-    
+
+    phi = PI*0.35;
+    theta = PI*0.3;
+        
     center2eye[0] = eyeDistance*cos(phi)*sin(theta);
     center2eye[1] = eyeDistance*sin(phi)*sin(theta);
     center2eye[2] = eyeDistance*cos(theta);
@@ -43,9 +46,6 @@ public:
     ebase_z[0] = cos(phi)*sin(theta-0.5*PI);
     ebase_z[1] = sin(phi)*sin(theta-0.5*PI);
     ebase_z[2] = cos(theta-0.5*PI);
-
-    phi = PI*0.35;
-    theta = PI*0.3;
 
     but = 0;
   };

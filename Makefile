@@ -1,8 +1,8 @@
 #for OpenGL graphics makefile
 CC = g++
 
-CFLAGS = -g -O0 -Wall
-#CFLAGS = -O3
+#CFLAGS = -g -O0 -Wall
+CFLAGS = -O3
 
 OBJECTS = sysdraw.o mouse_handling_rev.o jpegout.o main.o
 TARGET = Draw

@@ -1,5 +1,5 @@
 #include "sysdraw.hpp"
-#include "mouse_handling_rev.hpp"
+#include "mousehandle.hpp"
 #include <iostream>
 
 drawsys* Drawsys;
@@ -41,6 +41,14 @@ int main(int argc, char* argv[]){
   Drawsys->SetParamParticle(scL,prad,seedN,pN);
   Drawsys->SetParamTime(all_time,time_step);
 
+  //mouse util
+  MouseHandle		   = new mouse_handle (0.5,0.5,0.5,6.,30.);
+  double*	fovy	   = MouseHandle->RetFovy();
+  double*	persCenter = MouseHandle->RetPersCent();
+  double*	center2eye = MouseHandle->RetCenter2eye();
+  double*	ebase_z    = MouseHandle->RetEbaseZ();
+  Drawsys->GetMouseInfo(fovy,persCenter,center2eye,ebase_z);
+
   //file manager
   Drawsys->FileManag();
   
@@ -66,13 +74,6 @@ int main(int argc, char* argv[]){
   Drawsys->SetWindow();
   Drawsys->InitWindowSys(argc,argv);
   
-  //mouse util
-  MouseHandle		   = new mouse_handle (0.5,0.5,0.5,6.,30.);
-  double*	fovy	   = MouseHandle->RetFovy();
-  double*	persCenter = MouseHandle->RetPersCent();
-  double*	center2eye = MouseHandle->RetCenter2eye();
-  double*	ebase_z    = MouseHandle->RetEbaseZ();
-  Drawsys->GetMouseInfo(fovy,persCenter,center2eye,ebase_z);
 
   //set call back fuction
   Drawsys->SetCallBackFunc();

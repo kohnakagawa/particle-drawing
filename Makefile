@@ -4,7 +4,7 @@ CC = g++
 #CFLAGS = -g -O0 -Wall
 CFLAGS = -O3
 
-OBJECTS = sysdraw.o mouse_handling_rev.o jpegout.o main.o
+OBJECTS = sysdraw.o mousehandle.o jpegout.o main.o
 TARGET = Draw
 
 LOADLIBES = -lglut -lGLU -lGL -ljpeg

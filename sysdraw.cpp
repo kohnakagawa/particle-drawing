@@ -1,19 +1,19 @@
 #include <cstdlib>
 #include <iostream>
 #include "sysdraw.hpp"
-#include "mouse_handling_rev.hpp"
+#include "mousehandle.hpp"
 
 void drwsys_clbck::disp_callback(void){
-    Drawsys->Display();
+  Drawsys->Display();
 }
 void drwsys_clbck::timer_callback(int value){
-    Drawsys->Timer(value);
+  Drawsys->Timer(value);
 }
 void drwsys_clbck::resize_callback(int w,int h){
-    Drawsys->Resize(w,h);
+  Drawsys->Resize(w,h);
 }
 void drwsys_clbck::keyboard_callback(unsigned char key,int x,int y){
-    Drawsys->KeyBoard(key,x,y);
+  Drawsys->KeyBoard(key,x,y);
 }
 
 void drawsys::SetParamParticle(double scL,double prad,int seedN,int pN){
@@ -28,7 +28,7 @@ void drawsys::SetParamParticle(double scL,double prad,int seedN,int pN){
   }
 
   invL = 1./scL;
-  prad *= invL;
+  this->prad *= invL;
 
   Particle.resize(pN);
   p_color.reserve(seedN);
@@ -36,6 +36,11 @@ void drawsys::SetParamParticle(double scL,double prad,int seedN,int pN){
   draw_crit.set(); //all true
   draw_crit_max = Pow_n(2,seedN);
   draw_crit_base = draw_crit_max - 1;
+  
+  for(int i=0; i<seedN; i++){
+    int base_b = Pow_n(2,i);
+    draw_crit_mask.push_back(base_b);
+  }
 }
 
 void drawsys::SetParamTime(int all_time,int time_step){
@@ -88,21 +93,37 @@ void drawsys::InitWindowSys(int argc,char* argv[]) const {
 }
 
 void drawsys::InitCube(){
-  int count = 0;
-  for(int iz=0; iz<2; iz++){
-    for(int iy=0; iy<2; iy++){
-      for(int ix=0; ix<2; ix++){
-	double pos[3] = {1.,1.,1. };
-	pos[0] *= (double)ix;
-	pos[1] *= (double)iy;
-	pos[2] *= (double)iz;
-	vertex[count][0] = pos[0];
-	vertex[count][1] = pos[1];
-	vertex[count][2] = pos[2];
-	count++;
-      }
-    }
-  }
+  vertex[0][0] = 0.;
+  vertex[0][1] = 0.;
+  vertex[0][2] = 0.;
+  
+  vertex[1][0] = 1.;
+  vertex[1][1] = 0.;
+  vertex[1][2] = 0.;
+
+  vertex[2][0] = 1.;
+  vertex[2][1] = 1.;
+  vertex[2][2] = 0.;
+
+  vertex[3][0] = 0.;
+  vertex[3][1] = 1.;
+  vertex[3][2] = 0.;
+
+  vertex[4][0] = 0.;
+  vertex[4][1] = 0.;
+  vertex[4][2] = 1.;
+
+  vertex[5][0] = 1.;
+  vertex[5][1] = 0.;
+  vertex[5][2] = 1.;
+
+  vertex[6][0] = 1.;
+  vertex[6][1] = 1.;
+  vertex[6][2] = 1.;
+
+  vertex[7][0] = 0.;
+  vertex[7][1] = 1.;
+  vertex[7][2] = 1.;
 
   cubeedge[0][0] = 0;
   cubeedge[0][1] = 1;
@@ -278,7 +299,7 @@ void drawsys::Display(){
       if(cut_adv == 0) cut_plane -= 0.01;
       break;
     case 2://斜めにカット
-      if(cut_skew < 0.0) cut_skew += 1.0;
+      if(cut_skew < 0.0) cut_skew += 3.0;
       for(int i=0; i<pN; i++){
 	const int p_prop = Particle[i].prop;
 	GLfloat color[3];
@@ -322,7 +343,7 @@ void drawsys::Display(){
 void drawsys::KeyBoard(unsigned char key,int x,int y){
   const int wid = glutGet(GLUT_WINDOW_WIDTH);
   const int hei = glutGet(GLUT_WINDOW_HEIGHT);
-    switch(key)
+  switch(key)
     {
     case 'b':
       swt_but = 0; //描画を再開する
@@ -391,7 +412,9 @@ void drawsys::KeyBoard(unsigned char key,int x,int y){
       cut_but = 2; //斜めにカット
       break;
     case 'h':
+      swt_but = 1;
       ChgDrawObject();
+      Resize(wid,hei);
       break;
     default:
       break;		  
@@ -415,11 +438,8 @@ void drawsys::PrintDrawInfo() const {
 }
 
 void drawsys::LoadParticleDat(){
-  std::vector<particle>::iterator it;
-  it = Particle.begin();
   for(int i=0; i<pN; i++){
-    fin >> (*it).r[0] >> (*it).r[1] >> (*it).r[2] >> (*it).prop;
-    it++;
+    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop;
   }
   for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;
@@ -429,13 +449,11 @@ void drawsys::LoadParticleDat(){
 }
 
 void drawsys::ChgDrawObject(){
-  draw_crit_base = (draw_crit_base + 1)%draw_crit_max;
-  if(draw_crit_base == 0) draw_crit_base++;
+  draw_crit_base++;
+  if(draw_crit_base == draw_crit_max) draw_crit_base = 1;
   
-  int temp_crit = draw_crit_base;
   for(int i=0; i<seedN; i++){
-    draw_crit[i] = temp_crit&draw_crit_mask;
-    temp_crit >>= temp_crit;
+    draw_crit[i] = ((draw_crit_base&draw_crit_mask[i])==draw_crit_mask[i]);
   }
 }
 

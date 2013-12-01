@@ -24,9 +24,7 @@ private:
   std::bitset<15> draw_crit;
   int draw_crit_max;
   int draw_crit_base;
-  enum{
-    draw_crit_mask = 0x7ffe
-  };
+  std::vector<int> draw_crit_mask;
   
   int cubeedge[12][2];
   GLdouble vertex[8][3]; //立方体の各頂点

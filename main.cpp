@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
   pN = wN + lN;
   seedN = 3;
 
-  //instance
+  //drawing system
   Drawsys = new drawsys (cur_dir,crit_out);
   Drawsys->SetParamParticle(scL,prad,seedN,pN);
   Drawsys->SetParamTime(all_time,time_step);
@@ -74,8 +74,7 @@ int main(int argc, char* argv[]){
   Drawsys->SetWindow();
   Drawsys->InitWindowSys(argc,argv);
   
-
-  //set call back fuction
+  //set call_back fuction
   Drawsys->SetCallBackFunc();
 
   //init window color

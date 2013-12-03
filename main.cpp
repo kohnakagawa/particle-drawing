@@ -61,7 +61,8 @@ int main(int argc, char* argv[]){
   Drawsys->SetColor(hyphob_c);
   
   //light set
-  GLfloat light0pos[] = { 3.0, 4.0, 5.0, 1.0 };
+  //GLfloat light0pos[] = { 3.0,4.0, 5.0,1.};
+  GLfloat light0pos[] = { 0.,0.,-1.,1.};
   Drawsys->SetLightPos(light0pos);
 
   //cube set

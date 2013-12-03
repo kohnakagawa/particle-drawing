@@ -231,6 +231,16 @@ void drawsys::Resize(int w,int h) const {
   glMatrixMode(GL_MODELVIEW); //モデルビュー変換行列設定
   glLoadIdentity();
 
+  ///////////////////光源と視点が一緒に動く場合
+  GLfloat light0pos[4];
+  light0pos[0] = lightpos[0].l[0];
+  light0pos[1] = lightpos[0].l[1];
+  light0pos[2] = lightpos[0].l[2];
+  light0pos[3] = lightpos[0].l[3];
+
+  glLightfv(GL_LIGHT0, GL_POSITION, light0pos); 
+  /////////////////////////////////////////////
+
   gluLookAt(p_perscenter[0] + p_center2eye[0],
 	    p_perscenter[1] + p_center2eye[1],
 	    p_perscenter[2] + p_center2eye[2],
@@ -241,7 +251,6 @@ void drawsys::Resize(int w,int h) const {
 	    p_base_z[1],
 	    p_base_z[2]);
   //  gluLookAt(5.0,4.0,3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0); 
-
 }
 
 void drawsys::Display(){
@@ -249,14 +258,15 @@ void drawsys::Display(){
   static double cut_skew = 3.0;
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //カラーバッファ,デプスバッファ指定
-  GLfloat light0pos[4];
-  light0pos[0] = lightpos[0].l[0];
-  light0pos[1] = lightpos[0].l[1];
-  light0pos[2] = lightpos[0].l[2];
-  light0pos[3] = lightpos[0].l[3];
+  //////////////////////////////光源と視点が一緒に動かず固定されている場合
+  // GLfloat light0pos[4];
+  // light0pos[0] = lightpos[0].l[0];
+  // light0pos[1] = lightpos[0].l[1];
+  // light0pos[2] = lightpos[0].l[2];
+  // light0pos[3] = lightpos[0].l[3];
 
-  glLightfv(GL_LIGHT0, GL_POSITION, light0pos); //光源0指定 視点を設定した後で指定する。
-  
+  // glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
+  //////////////////////////////  
   if(swt_but == 0){
       LoadParticleDat(); //粒子の座標データを読み込む
   }
@@ -321,7 +331,9 @@ void drawsys::Display(){
     }  
   
   //立方体描画
-  glColor3d(0.0, 0.0, 0.0);
+  GLfloat color[3] = {0.,0.,0.};
+  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
+  //glColor3d(0.0, 0.0, 0.0);
   glBegin(GL_LINES);
   for (int i = 0; i < 12; ++i) {
     glVertex3dv(vertex[cubeedge[i][0]]);
@@ -346,38 +358,38 @@ void drawsys::KeyBoard(unsigned char key,int x,int y){
   switch(key)
     {
     case 'b':
-      swt_but = 0; //描画を再開する
+      swt_but = 0;
       break;
     case 'B':
-      cut_adv = 0; //断面カットを再開する。
+      cut_adv = 0;
       break;
     case 's':
-      swt_but = 1; //描画をストップする
+      swt_but = 1;
       break;
     case 'S':
-      cut_adv = 1;//断面カットを一時停止する。
+      cut_adv = 1;
       break;
-    case 'q'://断面カットモードを中断し、描画にもどる。
+    case 'q':
       swt_but = 0;
       cut_but = 0;
       break;
     case 'x':
-      swt_but = 1; //描画を一度中断する。
-      cut_adv = 0; //断面カット再開
-      cut_but = 1; 
-      cut_axis = 0;//x軸にそってカット
+      swt_but  = 1;
+      cut_adv  = 0;
+      cut_but  = 1; 
+      cut_axis = 0;
       break;
     case 'y': 
-      swt_but = 1; //描画を一度中断する。
-      cut_adv = 0; //断面カット再開
-      cut_but = 1; 
-      cut_axis = 1;//y軸にそってカット
+      swt_but  = 1;
+      cut_adv  = 0;
+      cut_but  = 1; 
+      cut_axis = 1;
       break;
     case 'z':
-      swt_but = 1; //描画を一度中断する。
-      cut_adv = 0; //断面カット再開
+      swt_but = 1;
+      cut_adv = 0;
       cut_but = 1; 
-      cut_axis = 2;//z軸にそってカット
+      cut_axis = 2;
       break;
     case 'X':
       p_center2eye[0] = 6.0;
@@ -407,9 +419,9 @@ void drawsys::KeyBoard(unsigned char key,int x,int y){
       Resize(wid,hei);
       break;
     case 'c':
-      swt_but = 1; //描画を一度中断する。
-      cut_adv = 0; //断面カット再開
-      cut_but = 2; //斜めにカット
+      swt_but = 1;
+      cut_adv = 0;
+      cut_but = 2;
       break;
     case 'h':
       swt_but = 1;

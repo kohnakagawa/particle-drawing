@@ -193,7 +193,6 @@ void drawsys::Timer(int value){
       swt_but = 1;
     }else{
       std::cout << "delete objects" << std::endl;
-      delete jpgout;
       delete MouseHandle;
       delete this;
       exit(0);

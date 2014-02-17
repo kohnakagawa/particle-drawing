@@ -62,13 +62,15 @@ private:
   
   //out jpeg
   bool crit_out;
-  Jpegout jpgout;
+  Jpegout* jpgout;
+  enum{MAX_TIME = 10000000};
 public:
   drawsys(char* cur_dir,bool crit_out){
     this->cur_dir = cur_dir;
     this->crit_out = crit_out;
+    jpgout = new Jpegout (MAX_TIME);
   };
-  ~drawsys(){};
+  ~drawsys(){delete jpgout;};
   void SetParamParticle(double,double,int,int);
   void SetParamTime(int,int);
   void SetCallBackFunc() const;

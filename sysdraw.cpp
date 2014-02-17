@@ -193,6 +193,7 @@ void drawsys::Timer(int value){
       swt_but = 1;
     }else{
       std::cout << "delete objects" << std::endl;
+      delete jpgout;
       delete MouseHandle;
       delete this;
       exit(0);
@@ -343,10 +344,13 @@ void drawsys::Display(){
 
   //xyz軸描画
   //Drawxyz();
-  if(cur_time != 0 && crit_out == true){
-    jpgout.PrepSavingImage();
-    jpgout.SnapijgImage();
-    jpgout.SaveImgJpeg(cur_time,all_time,cur_dir,time_step);
+
+  //Jpeg出力
+  const int jpeg_time = jpgout->GetJpegTime();
+  if(cur_time != 0 && (crit_out == true) && (jpeg_time < MAX_TIME) ){
+    jpgout->PrepSavingImage();
+    jpgout->SnapijgImage();
+    jpgout->SaveImgJpeg(cur_time,all_time,cur_dir,time_step);
   }
 
   glutSwapBuffers();

@@ -34,7 +34,7 @@ int main(int argc, char* argv[]){
   int all_time,time_step;
   fin >> wN >> lN >> scL >> prad >> all_time >> time_step;
   pN = wN + lN;
-  seedN = 3;
+  seedN = 4;
 
   //drawing system
   Drawsys = new drawsys (cur_dir,crit_out);
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
   Drawsys->SetParamTime(all_time,time_step);
 
   //mouse util
-  MouseHandle		   = new mouse_handle (0.5,0.5,0.5,6.,30.);
+  MouseHandle		   = new mouse_handle (0.5,0.5,0.5,6.,20.);
   double*	fovy	   = MouseHandle->RetFovy();
   double*	persCenter = MouseHandle->RetPersCent();
   double*	center2eye = MouseHandle->RetCenter2eye();
@@ -56,9 +56,11 @@ int main(int argc, char* argv[]){
   GLfloat water_c[] = {0.000, 0.749, 1.000};
   GLfloat hyphil_c[] = {1.000, 0.188, 0.188};
   GLfloat hyphob_c[] = {1.000, 0.843, 0.000};
+  GLfloat reacted_c[] = {0.498,1.000,0.000};
   Drawsys->SetColor(water_c);
   Drawsys->SetColor(hyphil_c);
   Drawsys->SetColor(hyphob_c);
+  Drawsys->SetColor(reacted_c);
   
   //light set
   //GLfloat light0pos[] = { 3.0,4.0, 5.0,1.};

@@ -13,7 +13,7 @@ SaveImgJpeg(current_time,all_time_steps,current_dir);
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <cmath>
+
 #include <GL/freeglut.h>
 #include <jpeglib.h>
 #include "jpegout.hpp"
@@ -52,10 +52,12 @@ void Jpegout::SaveImgJpeg(int current_time,int all_time_steps, char* current_dir
   FILE *outfile;
   JSAMPLE*  fram_buffer = (JSAMPLE*)ptr_buffer;
   
-  const int numb_digit = static_cast<int>(log10(all_time_steps/time_step)) + 1;
-
+  /*  const int numb_digit = static_cast<int>(log10(all_time_steps/time_step)) + 1;
   std::stringstream ss;
-  ss << current_dir  << "/time" << std::setw(numb_digit) << std::setfill('0') << (int)current_time/time_step << ".jpeg";
+  ss << current_dir  << "/time" << std::setw(numb_digit) << std::setfill('0') << (int)current_time/time_step << ".jpeg";*/
+  
+  std::stringstream ss;
+  ss << current_dir << "/time" << std::setw(numb_digit) << std::setfill('0') << jpeg_time << ".jpeg";
   
   //JPEGオブジェクトの初期化
   cinfo.err = jpeg_std_error(&jerr);
@@ -88,4 +90,6 @@ void Jpegout::SaveImgJpeg(int current_time,int all_time_steps, char* current_dir
   jpeg_finish_compress(&cinfo); //圧縮の終了
   jpeg_destroy_compress(&cinfo);//JPEGオブジェクトの破棄
   fclose(outfile); //ファイルを閉じる
+
+  jpeg_time++;
 }

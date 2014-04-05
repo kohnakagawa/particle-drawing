@@ -1,7 +1,5 @@
 #pragma once
-
 #include <cmath>
-#include <GL/freeglut.h>
 
 const double PI = 6.*asin(0.5);
 

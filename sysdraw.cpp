@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "sysdraw.hpp"
+
 #include "mousehandle.hpp"
 
 void drwsys_clbck::disp_callback(void){
@@ -298,7 +299,7 @@ void drawsys::Display(){
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
 	
-	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true){
+	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true && Particle[i].chem == true){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
 	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
@@ -328,10 +329,45 @@ void drawsys::Display(){
       }
       if(cut_adv == 0) cut_skew -= 0.05;
       break;
-    }  
+    case 3://反応していない粒子のみ描画する
+      for(int i=0; i<pN; i++){
+	const int p_prop = Particle[i].prop;
+	GLfloat color[3];
+	color[0] = p_color[p_prop].p[0];
+	color[1] = p_color[p_prop].p[1];
+	color[2] = p_color[p_prop].p[2];
+	
+	if((draw_crit[p_prop] == true) && (Particle[i].chem == false) ){
+	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+	  glPushMatrix();
+	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
+	  glutSolidSphere(prad,10,10);
+	  glPopMatrix();
+	}
+      }
+      break;
+    case 4://反応済粒子のみ描画する
+      for(int i=0; i<pN; i++){
+	const int p_prop = Particle[i].prop;
+	GLfloat color[3];
+	color[0] = p_color[p_prop].p[0];
+	color[1] = p_color[p_prop].p[1];
+	color[2] = p_color[p_prop].p[2];
+	
+	if((draw_crit[p_prop] == true) && (Particle[i].chem == true)){
+	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+	  glPushMatrix();
+	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
+	  glutSolidSphere(prad,10,10);
+	  glPopMatrix();
+	}
+      }
+      break;
+    }
+  
   
   //立方体描画
-  GLfloat color[3] = {0.,0.,0.};
+  /*  GLfloat color[3] = {0.,0.,0.};
   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
   //glColor3d(0.0, 0.0, 0.0);
   glBegin(GL_LINES);
@@ -339,11 +375,18 @@ void drawsys::Display(){
     glVertex3dv(vertex[cubeedge[i][0]]);
     glVertex3dv(vertex[cubeedge[i][1]]);
   }
-  glEnd();
+  glEnd();*/
 
   //xyz軸描画
   //Drawxyz();
 
+  //time step 出力
+  std::stringstream ss_time_step;
+  ss_time_step << "time = " << cur_time ;
+  glColor3d(0.,0.,0.);
+  RenderString(ss_time_step.str().c_str(),0.8,0.8);
+  glPopAttrib();
+  
   //Jpeg出力
   const int jpeg_time = jpgout->GetJpegTime();
   if(cur_time != 0 && (crit_out == true) && (jpeg_time < MAX_TIME) ){
@@ -431,39 +474,83 @@ void drawsys::KeyBoard(unsigned char key,int x,int y){
       ChgDrawObject();
       Resize(wid,hei);
       break;
+    case '1':
+      draw_crit[0] = 0;
+      draw_crit[1] = 1;
+      draw_crit[2] = 1;
+      draw_crit[3] = 1;
+      Resize(wid,hei);
+      break;
+    case '2':
+      draw_crit[0] = 1;
+      draw_crit[1] = 1;
+      draw_crit[2] = 1;
+      draw_crit[3] = 1;
+      Resize(wid,hei);
+      break;
+    case '3':
+      draw_crit[0] = 0;
+      draw_crit[1] = 0;
+      draw_crit[2] = 1;
+      draw_crit[3] = 1;
+      Resize(wid,hei);
+      break;
+    case 'H':
+      cut_but = 3;
+      Resize(wid,hei);
+      break;
+    case 'A':
+      cut_but = 4;
+      Resize(wid,hei);
+      break;
+    case 'Q':
+      cut_but = 0;
+      Resize(wid,hei);
+      break;
     default:
       break;		  
     }
 }
 
 void drawsys::PrintDrawInfo() const {
-  std::cout << "b restart drawing" << std::endl;
-  std::cout << "s stop drawing" << std::endl;
-  std::cout << "c start cutting(skew)" << std::endl;
+  std::cout << "b restart drawing"       << std::endl;
+  std::cout << "s stop drawing"          << std::endl;
+  std::cout << "c start cutting(skew)"   << std::endl;
   std::cout << "x start cutting(x axis)" << std::endl;
   std::cout << "y start cutting(y axis)" << std::endl;
   std::cout << "z start cutting(z axis)" << std::endl;
-  std::cout << "B restart cutting" << std::endl;
-  std::cout << "S stop cutting" << std::endl;
-  std::cout << "q quit cutting mode" << std::endl;
-  std::cout << "X look along x axis" << std::endl;
-  std::cout << "Y look along y axis" << std::endl;
-  std::cout << "Z look along z axis" << std::endl;
-  std::cout << "h change visible object." << std::endl;
+  std::cout << "B restart cutting"       << std::endl;
+  std::cout << "S stop cutting"          << std::endl;
+  std::cout << "q quit cutting mode"     << std::endl;
+  std::cout << "X look along x axis"     << std::endl;
+  std::cout << "Y look along y axis"     << std::endl;
+  std::cout << "Z look along z axis"     << std::endl;
+  std::cout << "h change visible object."<< std::endl;
 }
 
 void drawsys::LoadParticleDat(){
   for(int i=0; i<pN; i++){
-    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop;
+    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;
   }
   for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;
     Particle[i].r[1] *= invL;
     Particle[i].r[2] *= invL;
   }
+  /*  for(int i=0; i<pN; i++){
+    if(Particle[i].r[0] > 0.5) Particle[i].r[0] -= 1.;
+    if(Particle[i].r[1] < 0.5) Particle[i].r[1] += 1.;
+    if(Particle[i].r[2] < 0.5) Particle[i].r[2] += 1.;
+  }
+  for(int i=0; i<pN; i++){
+    Particle[i].r[0] += 1.;
+    Particle[i].r[1] -= 1.;
+    Particle[i].r[2] -= 1.;
+    }*/
 }
 
 void drawsys::ChgDrawObject(){
+  //general changing patern
   draw_crit_base++;
   if(draw_crit_base == draw_crit_max) draw_crit_base = 1;
   
@@ -484,4 +571,23 @@ int drawsys::Pow_n(int x, int n) const {
     }
   }
   return a;
+}
+
+void drawsys::RenderString(const char *str,float x,float y){
+  glWindowPos2f(x,y);
+
+  while(*str){
+    glutBitmapCharacter(font, *str);
+    ++str;
+  }
+}
+
+bool drawsys::InitGlew() const {
+  GLenum err;
+  err = glewInit();
+  if (err != GLEW_OK){
+    std::cerr << glewGetErrorString(err) << "\n";
+    return false;
+  }
+  return true;
 }

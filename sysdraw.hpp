@@ -1,10 +1,11 @@
 #pragma once
-
+#include <GL/glew.h>
 #include <cmath>
 #include <sstream>
 #include <vector>
 #include <bitset>
 #include <fstream>
+
 #include <GL/freeglut.h>
 #include "jpegout.hpp"
 
@@ -49,12 +50,15 @@ private:
   struct particle{
     double r[3]; //position
     int prop;    //property
+    bool chem;
   };
   double scL,invL;
   double prad;
   std::vector<particle> Particle;
   int seedN;
   int pN;
+
+  void *font;
   
   //util
   char* cur_dir;
@@ -69,6 +73,8 @@ public:
     this->cur_dir = cur_dir;
     this->crit_out = crit_out;
     jpgout = new Jpegout (MAX_TIME);
+    font = GLUT_BITMAP_TIMES_ROMAN_24;
+    //font = GLUT_STROKE_MONO_ROMAN;
   };
   ~drawsys(){delete jpgout;};
   void SetParamParticle(double,double,int,int);
@@ -83,6 +89,7 @@ public:
   void InitCut();
   void InitWindowSys(int argc,char* argv[]) const;
   void InitColor() const;
+  bool InitGlew() const;
   
   void FileManag();
   
@@ -93,6 +100,7 @@ public:
   void KeyBoard(unsigned char, int ,int);
   void ChgDrawObject();
   void Drawxyz();
+  void RenderString(const char *,float,float);
   
   void PrintDrawInfo() const;
 

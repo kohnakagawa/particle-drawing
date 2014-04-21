@@ -5,14 +5,14 @@ CC = g++
 CFLAGS = -O3
 
 OBJECTS = sysdraw.o mousehandle.o jpegout.o main.o
-TARGET = Draw
+TARGET = cDraw
 
-LOADLIBES = -lglut -lGLU -lGL -ljpeg
+LOADLIBES = -lglut -lGLU -lGL -ljpeg -lGLEW
 
 .SUFFIXES:
 .SUFFIXES: .cpp .o
 .cpp.o:
-	$(CC) $(CFLAGS) -c $< $(LOADLIBES) -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) $(LOADLIBES) -o $@

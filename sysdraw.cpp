@@ -299,7 +299,7 @@ void drawsys::Display(){
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
 	
-	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true && Particle[i].chem == true){
+	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
 	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);

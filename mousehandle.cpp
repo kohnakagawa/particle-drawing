@@ -1,6 +1,5 @@
-#include "mousehandle.hpp"
 #include "sysdraw.hpp"
-
+#include "mousehandle.hpp"
 #include <iostream>
 
 void moushandl_clbck::mouseclick_callback(int but, int state, int x, int y){

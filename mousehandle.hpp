@@ -1,8 +1,6 @@
 #pragma once
 #include <cmath>
 
-const double PI = 6.*asin(0.5);
-
 class mouse_handle{
 private:
   struct quaternion{
@@ -34,17 +32,17 @@ public:
     
     fovy = fov;
 
-    phi = PI*0.35;
-    theta = PI*0.3;
-        
+    phi = M_PI*0.35;
+    theta = M_PI*0.3;
+    
     center2eye[0] = eyeDistance*cos(phi)*sin(theta);
     center2eye[1] = eyeDistance*sin(phi)*sin(theta);
     center2eye[2] = eyeDistance*cos(theta);
 
-    ebase_z[0] = cos(phi)*sin(theta-0.5*PI);
-    ebase_z[1] = sin(phi)*sin(theta-0.5*PI);
-    ebase_z[2] = cos(theta-0.5*PI);
-
+    ebase_z[0] = cos(phi)*sin(theta-0.5*M_PI);
+    ebase_z[1] = sin(phi)*sin(theta-0.5*M_PI);
+    ebase_z[2] = cos(theta-0.5*M_PI);
+    
     but = 0;
   };
   ~mouse_handle(){};

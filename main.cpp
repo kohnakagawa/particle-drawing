@@ -1,40 +1,41 @@
 #include "sysdraw.hpp"
 #include "mousehandle.hpp"
 #include <iostream>
+#include <string>
+
 
 drawsys* Drawsys;
 mouse_handle* MouseHandle;
 
-void Warning(){
-  std::cout << "usage:" << std::endl;
-  std::cout << "argv[1] = target directory." << std::endl;
-  std::cout << "argv[2] = 0 or 1." << std::endl;
-  std::cout << "argv[2] = 0: There are no jpeg files." << std::endl;
-  std::cout << "argv[2] = 1: There are jpeg files in the target directory." << std::endl;
-  exit(1);
+namespace {
+  void Warning(){
+    std::cout << "usage:" << std::endl;
+    std::cout << "argv[1] = target directory." << std::endl;
+    std::cout << "argv[2] = 0 or 1." << std::endl;
+    std::cout << "argv[2] = 0: There are no jpeg files." << std::endl;
+    std::cout << "argv[2] = 1: There are jpeg files in the target directory." << std::endl;
+    exit(1);
+  }
 }
 
 int main(int argc, char* argv[]){
   if(argc < 3) Warning();
   char* cur_dir = argv[1];
   int buff = atoi(argv[2]);
-  if(buff > 1 || buff < 0){
-    std::cout << buff << std::endl;
-    std::cout << "argv[2] should be 0 or 1." << std::endl;
-    Warning();
-  }
+  if(buff > 1 || buff < 0) Warning();
+  
   bool crit_out = (bool)buff;
 
-  std::stringstream ss;
-  ss << cur_dir << "/macro_data.txt";
-  std::ifstream fin(ss.str().c_str());
+  std::string str = cur_dir;
+  str += "/macro_data.txt";
+  std::ifstream fin(str.c_str());
+  
   double scL,prad;
-  int seedN,pN;
   int wN,lN;
   int all_time,time_step;
   fin >> wN >> lN >> scL >> prad >> all_time >> time_step;
-  pN = wN + lN;
-  seedN = 4;
+  const int pN = wN + lN;
+  const int seedN = 4;
 
   //drawing system
   Drawsys = new drawsys (cur_dir,crit_out);

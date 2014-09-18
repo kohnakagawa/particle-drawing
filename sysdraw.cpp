@@ -183,9 +183,10 @@ void drawsys::InitColor() const{
 }
 
 void drawsys::FileManag(){
-  std::stringstream ss;
-  ss << cur_dir << "/particle_data.txt";
-  fin.open(ss.str().c_str());
+  std::string str;
+  str = cur_dir;
+  str += "/particle_data.txt";
+  fin.open(str.c_str());
 }
 
 void drawsys::Timer(int value){
@@ -299,7 +300,7 @@ void drawsys::Display(){
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
 	
-	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true){
+	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true && (Particle[i].chem == false)){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
 	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
@@ -367,7 +368,7 @@ void drawsys::Display(){
   
   
   //立方体描画
-  /*  GLfloat color[3] = {0.,0.,0.};
+  GLfloat color[3] = {0.,0.,0.};
   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
   //glColor3d(0.0, 0.0, 0.0);
   glBegin(GL_LINES);
@@ -375,7 +376,7 @@ void drawsys::Display(){
     glVertex3dv(vertex[cubeedge[i][0]]);
     glVertex3dv(vertex[cubeedge[i][1]]);
   }
-  glEnd();*/
+  glEnd();
 
   //xyz軸描画
   //Drawxyz();
@@ -529,24 +530,17 @@ void drawsys::PrintDrawInfo() const {
 }
 
 void drawsys::LoadParticleDat(){
+  double buf_d[3] = {0.0}; int buf_i = 0;
   for(int i=0; i<pN; i++){
-    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;
+    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
+	>> buf_d[0]         >> buf_d[1]         >> buf_d[2] 
+	>> Particle[i].prop >> Particle[i].chem >> buf_i;
   }
   for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;
     Particle[i].r[1] *= invL;
     Particle[i].r[2] *= invL;
   }
-  /*  for(int i=0; i<pN; i++){
-    if(Particle[i].r[0] > 0.5) Particle[i].r[0] -= 1.;
-    if(Particle[i].r[1] < 0.5) Particle[i].r[1] += 1.;
-    if(Particle[i].r[2] < 0.5) Particle[i].r[2] += 1.;
-  }
-  for(int i=0; i<pN; i++){
-    Particle[i].r[0] += 1.;
-    Particle[i].r[1] -= 1.;
-    Particle[i].r[2] -= 1.;
-    }*/
 }
 
 void drawsys::ChgDrawObject(){

@@ -144,9 +144,9 @@ void mouse_handle::MakeRotationalQuate(double radian, double* rot_axis, quaterni
        
   Normaliz(rot_axis);
 
-  double ccc   = cos(0.5 * radian);      
-  double sss   = sin(0.5 * radian);      
-       
+  const double ccc   = cos(0.5 * radian);
+  const double sss   = sin(0.5 * radian);
+  
   ret->t = ccc;      
   ret->x = sss * rot_axis[0];
   ret->y = sss * rot_axis[1];  

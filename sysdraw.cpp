@@ -535,6 +535,7 @@ void drawsys::LoadParticleDat(){
     fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
 	>> buf_d[0]         >> buf_d[1]         >> buf_d[2] 
 	>> Particle[i].prop >> Particle[i].chem >> buf_i;
+    //fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;  //old version
   }
   for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;

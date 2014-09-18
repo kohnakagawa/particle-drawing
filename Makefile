@@ -7,7 +7,7 @@ CFLAGS = -O3
 OBJECTS = sysdraw.o mousehandle.o jpegout.o main.o
 TARGET = cDraw
 
-LOADLIBES = -lglut -lGLU -lGL -ljpeg -lGLEW
+LOADLIBES = -lglut -lGLU -L/usr/lib/nvidia-304 -lGL -ljpeg -lGLEW
 
 .SUFFIXES:
 .SUFFIXES: .cpp .o

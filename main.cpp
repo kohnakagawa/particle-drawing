@@ -3,7 +3,6 @@
 #include <iostream>
 #include <string>
 
-
 drawsys* Drawsys;
 mouse_handle* MouseHandle;
 
@@ -30,9 +29,9 @@ int main(int argc, char* argv[]){
   str += "/macro_data.txt";
   std::ifstream fin(str.c_str());
   
-  double scL,prad;
-  int wN,lN;
-  int all_time,time_step;
+  double scL, prad;
+  int wN, lN;
+  int all_time, time_step;
   fin >> wN >> lN >> scL >> prad >> all_time >> time_step;
   const int pN = wN + lN;
   const int seedN = 4;
@@ -56,14 +55,12 @@ int main(int argc, char* argv[]){
   //color set
   GLfloat water_c[] = {0.000, 0.749, 1.000};
   GLfloat hyphil_c[] = {1.000, 0.188, 0.188};
-  GLfloat hyphob_c[] = {1.000, 0.843, 0.000};
-  GLfloat reacted_c[] = {0.498,1.000,0.000};
+  GLfloat hyphob_c[] = {1.000, 1.000, 0.000};
+  GLfloat reacted_c[] = {0.000, 0.500, 0.000};
   Drawsys->SetColor(water_c);
   Drawsys->SetColor(hyphil_c);
-  /*  Drawsys->SetColor(hyphob_c);
-      Drawsys->SetColor(reacted_c);*/
-  Drawsys->SetColor(reacted_c);
   Drawsys->SetColor(hyphob_c);
+  Drawsys->SetColor(reacted_c);
   
   //light set
   //GLfloat light0pos[] = { 3.0,4.0, 5.0,1.};

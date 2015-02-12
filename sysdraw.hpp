@@ -68,13 +68,19 @@ private:
   bool crit_out;
   Jpegout* jpgout;
   enum{MAX_TIME = 10000000};
+
+  void Drawxyz();
+  void DrawCubic();
+  void DrawAxis(float   , float, const float[][3]);
+  void DrawSubAxis(float, float, const float[3]);
+  void RenderString2D(const char *,float,float);
+  void RenderString3D(const char *,const float[3]);
 public:
   drawsys(char* cur_dir,bool crit_out){
     this->cur_dir = cur_dir;
     this->crit_out = crit_out;
     jpgout = new Jpegout (MAX_TIME);
     font = GLUT_BITMAP_TIMES_ROMAN_24;
-    //font = GLUT_STROKE_MONO_ROMAN;
   };
   ~drawsys(){delete jpgout;};
   void SetParamParticle(double,double,int,int);
@@ -99,8 +105,7 @@ public:
   void Resize(int,int) const;
   void KeyBoard(unsigned char, int ,int);
   void ChgDrawObject();
-  void Drawxyz();
-  void RenderString(const char *,float,float);
+
   
   void PrintDrawInfo() const;
 

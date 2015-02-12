@@ -206,20 +206,78 @@ void drawsys::Timer(int value){
 }
 
 void drawsys::Drawxyz(){
+  const float axis_pos[3] = {0.0, 0.0, 0.0};
+  glPushMatrix();
+  glTranslatef(axis_pos[0], axis_pos[1], axis_pos[2]);
   glBegin(GL_LINES);
 
-  glColor3d(0,1,0);
-  glVertex2d(-100,0);
-  glVertex2d(100, 0);
+  glColor3f(1.0, 0.0, 0.0);
+  glVertex3f(1.5, 0.0, 0.0);
+  glVertex3f(0.0, 0.0, 0.0);
 
-  glColor3d(1,0,0);
-  glVertex2d(0,0);
-  glVertex2d(0,100);
+  glColor3f(0.0, 1.0, 0.0);
+  glVertex3f(0.0, 1.5, 0.0);
+  glVertex3f(0.0, 0.0, 0.0);
 
-  glColor3d(0,0,1);
-  glVertex3d(0,0,-100);
-  glVertex3d(0,0, 100);
+  glColor3f(0.0 , 0.0, 1.0);
+  glVertex3f(0.0, 0.0, 1.5);
+  glVertex3f(0.0, 0.0, 0.0);
   glEnd();
+  glPopMatrix();
+}
+
+void drawsys::DrawCubic(){
+  GLfloat color[3] = {0.,0.,0.};
+  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
+  glBegin(GL_LINES);
+  for (int i = 0; i < 12; ++i) {
+    glVertex3dv(vertex[cubeedge[i][0]]);
+    glVertex3dv(vertex[cubeedge[i][1]]);
+  }
+  glEnd();
+}
+
+void drawsys::DrawAxis(float d, float s,const float col[][3]){
+  const float origin[3] = {-0.05, 0.0, 0.0};
+
+  glPushMatrix();
+  glTranslatef(origin[0], origin[1], origin[2]);
+  DrawSubAxis(d,s,col[0]);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(origin[0], origin[1], origin[2]);
+  glRotatef(90.0, 1.0, 0.0, 0.0);
+  DrawSubAxis(d,s,col[1]);
+  glPopMatrix();
+
+  glPushMatrix();
+  glTranslatef(origin[0], origin[1], origin[2]);
+  glRotatef(-90.0, 0.0, 0.0, 1.0);
+  DrawSubAxis(d,s,col[2]);
+  glPopMatrix();
+
+  /*const float n_pos[3][3] = {{1.23,0.0,0.0},{0.0,1.23,0.0},{0.0,0.0,1.23}};
+  const float black[3] = {0.0, 0.0, 0.0};
+  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,black);
+  RenderString3D("X",n_pos[0]);
+  RenderString3D("Y",n_pos[1]);
+  RenderString3D("Z",n_pos[2]);*/
+}
+
+void drawsys::DrawSubAxis(float d, float s,const float col[3]){
+  glBegin(GL_QUAD_STRIP);
+  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,col);
+  for(float i=0; i<=6.0; i+=1.0){
+    const float t = i * 2.0 * M_PI / 6.0;
+    glNormal3f((GLfloat)cos(t)    , 0.0, (GLfloat)sin(t)    );
+    glVertex3f((GLfloat)(d*cos(t)), 0.0, (GLfloat)(d*sin(t)));
+    glVertex3f((GLfloat)(d*cos(t)), s  , (GLfloat)(d*sin(t)));
+  }
+  glEnd();
+  glTranslatef(0.0, s, 0.0);
+  glRotatef(-90.0, 1.0, 0.0, 0.0);
+  glutSolidCone(2.0*d, 4.0*d, 5, 5);
 }
 
 void drawsys::Resize(int w,int h) const {
@@ -269,6 +327,17 @@ void drawsys::Display(){
 
   // glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
   //////////////////////////////  
+
+    
+  //立方体描画
+  //DrawCubic();
+
+  //xyz軸描画
+  //Drawxyz();
+
+  //const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
+  //DrawAxis(0.02,0.3,col);
+  
   if(swt_but == 0){
       LoadParticleDat(); //粒子の座標データを読み込む
   }
@@ -277,12 +346,9 @@ void drawsys::Display(){
     case 0://普通に描画
       for(int i=0; i<pN; i++){
 	const int p_prop = Particle[i].prop;
-	GLfloat color[3];
-	color[0] = p_color[p_prop].p[0];
-	color[1] = p_color[p_prop].p[1];
-	color[2] = p_color[p_prop].p[2];
+	const GLfloat color[3] = {p_color[p_prop].p[0], p_color[p_prop].p[1], p_color[p_prop].p[2]};
 	
-	if(draw_crit[p_prop] == true){
+	if(draw_crit[p_prop]){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
 	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
@@ -299,8 +365,14 @@ void drawsys::Display(){
 	color[0] = p_color[p_prop].p[0];
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
+
+	if((p_prop == 2) && (!Particle[i].chem)){
+	  color[0] = p_color[3].p[0];
+	  color[1] = p_color[3].p[1];
+	  color[2] = p_color[3].p[2];
+	}
 	
-	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] == true && (Particle[i].chem == false)){
+	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] && Particle[i].chem){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
 	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
@@ -318,9 +390,16 @@ void drawsys::Display(){
 	color[0] = p_color[p_prop].p[0];
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
+
+	if((p_prop == 2) && (!Particle[i].chem)){
+	  color[0] = p_color[3].p[0];
+	  color[1] = p_color[3].p[1];
+	  color[2] = p_color[3].p[2];
+	}
+
 	double cut_plane_skew = Particle[i].r[0] + Particle[i].r[1] + Particle[i].r[2];
 	
-	if(cut_plane_skew < cut_skew && draw_crit[p_prop] == true){
+	if(cut_plane_skew < cut_skew && draw_crit[p_prop]){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
 	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
@@ -338,6 +417,12 @@ void drawsys::Display(){
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
 	
+	if((p_prop == 2) && (!Particle[i].chem)){
+	  color[0] = p_color[3].p[0];
+	  color[1] = p_color[3].p[1];
+	  color[2] = p_color[3].p[2];
+	}
+	
 	if((draw_crit[p_prop] == true) && (Particle[i].chem == false) ){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
@@ -354,7 +439,7 @@ void drawsys::Display(){
 	color[0] = p_color[p_prop].p[0];
 	color[1] = p_color[p_prop].p[1];
 	color[2] = p_color[p_prop].p[2];
-	
+
 	if((draw_crit[p_prop] == true) && (Particle[i].chem == true)){
 	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
 	  glPushMatrix();
@@ -365,32 +450,17 @@ void drawsys::Display(){
       }
       break;
     }
-  
-  
-  //立方体描画
-  GLfloat color[3] = {0.,0.,0.};
-  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
-  //glColor3d(0.0, 0.0, 0.0);
-  glBegin(GL_LINES);
-  for (int i = 0; i < 12; ++i) {
-    glVertex3dv(vertex[cubeedge[i][0]]);
-    glVertex3dv(vertex[cubeedge[i][1]]);
-  }
-  glEnd();
-
-  //xyz軸描画
-  //Drawxyz();
 
   //time step 出力
   std::stringstream ss_time_step;
   ss_time_step << "time = " << cur_time ;
   glColor3d(0.,0.,0.);
-  RenderString(ss_time_step.str().c_str(),0.8,0.8);
+  RenderString2D(ss_time_step.str().c_str(),0.8,0.8);
   glPopAttrib();
   
   //Jpeg出力
   const int jpeg_time = jpgout->GetJpegTime();
-  if(cur_time != 0 && (crit_out == true) && (jpeg_time < MAX_TIME) ){
+  if((crit_out == true) && (jpeg_time < MAX_TIME) ){
     jpgout->PrepSavingImage();
     jpgout->SnapijgImage();
     jpgout->SaveImgJpeg(cur_time,all_time,cur_dir,time_step);
@@ -530,12 +600,12 @@ void drawsys::PrintDrawInfo() const {
 }
 
 void drawsys::LoadParticleDat(){
-  double buf_d[3] = {0.0}; int buf_i = 0;
+  double buf_d[3] = {0.0}; int buf_i = 0, buf_j = 0;
   for(int i=0; i<pN; i++){
-    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
+    /*fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
 	>> buf_d[0]         >> buf_d[1]         >> buf_d[2] 
-	>> Particle[i].prop >> Particle[i].chem >> buf_i;
-    //fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;  //old version
+	>> Particle[i].prop >> Particle[i].chem >> buf_i >> buf_j;*/
+    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;  //old version
   }
   for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;
@@ -568,13 +638,18 @@ int drawsys::Pow_n(int x, int n) const {
   return a;
 }
 
-void drawsys::RenderString(const char *str,float x,float y){
+void drawsys::RenderString2D(const char *str,float x,float y){
   glWindowPos2f(x,y);
 
   while(*str){
     glutBitmapCharacter(font, *str);
     ++str;
   }
+}
+
+void drawsys::RenderString3D(const char *str,const float r[3]){
+  glRasterPos3f(r[0], r[1], r[2]);
+  glutBitmapString(font,reinterpret_cast<const unsigned char*>(str));
 }
 
 bool drawsys::InitGlew() const {

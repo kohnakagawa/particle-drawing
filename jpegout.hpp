@@ -2,29 +2,36 @@
 
 #include <vector>
 #include <cmath>
+#include <fstream>
+#include <jpeglib.h>
 
 class Jpegout{
 private:
   enum{
-    MAX_HEIGHT = 2048
+    MAX_TIME = 1000000,
+    RGB_ELEM = 3,
+    IMG_QUALITY = 90, //0 ~ 100
   };
-  int b_wid,b_hei;
+  
+  int b_wid, b_hei;
   std::vector<float> ijg_buffer;
-  float* ptr_buffer;
-  int jpeg_time;
-  const int MAX_TIME;
-  int numb_digit;
+  int jpeg_time, numb_digit;
+
+  JSAMPROW* img;
+  JSAMPLE* ptr_buffer;
+  
+  void InitJpegOjbects(jpeg_compress_struct& cinfo, jpeg_error_mgr& jerr) const ;
+  void SetImageQuality(jpeg_compress_struct& cinfo) const ;
+  FILE* RetOutputFilePtr(const int jpeg_time, const std::string& cur_dir, jpeg_compress_struct& cinfo) const ;
+  void WriteImage2File(jpeg_compress_struct& cinfo);
+  void CleanUp(jpeg_compress_struct& cinfo, FILE* outfile) const ;
 public:
-  Jpegout(int max_time):MAX_TIME(max_time){
-    jpeg_time=0;
-    numb_digit = static_cast<int>(log10(MAX_TIME))+1;
-  };
-  void PrepSavingImage();
-  void SnapijgImage(void);
-  void SaveImgJpeg(int current_time,int all_time_steps, char* current_dir, int time_step);
-  int GetJpegTime(void){
-    return jpeg_time;
+  Jpegout():b_wid(-1), b_hei(-1), jpeg_time(0), img(nullptr), ptr_buffer(nullptr){
+    numb_digit = static_cast<int>(log10(MAX_TIME) ) + 1;
   }
+  void GetWindowInfo();
+  void SnapijgImage();
+  void SaveImgJpeg(const int current_time, const int all_time_steps, const std::string& cur_dir, const int time_step);
 };
 
 

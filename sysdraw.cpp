@@ -1,85 +1,110 @@
-#include <cstdlib>
 #include <iostream>
+#include <cstdlib>
+#include <sstream>
+#include <GL/glew.h>
 #include "sysdraw.hpp"
-
+#include "jpegout.hpp"
 #include "mousehandle.hpp"
 
-void drwsys_clbck::disp_callback(void){
-  Drawsys->Display();
+void callbacks::wrap_display(){
+  callbacks::drawsys->Display();
 }
-void drwsys_clbck::timer_callback(int value){
-  Drawsys->Timer(value);
+void callbacks::wrap_timer(int value){
+  callbacks::drawsys->Timer(value);
 }
-void drwsys_clbck::resize_callback(int w,int h){
-  Drawsys->Resize(w,h);
+void callbacks::wrap_resize(int w, int h){
+  callbacks::drawsys->Resize(w,h);
 }
-void drwsys_clbck::keyboard_callback(unsigned char key,int x,int y){
-  Drawsys->KeyBoard(key,x,y);
+void callbacks::wrap_keyboard(unsigned char key, int x, int y){
+  callbacks::drawsys->KeyBoard(key,x,y);
 }
 
-void drawsys::SetParamParticle(double scL,double prad,int seedN,int pN){
-  this->scL   = scL;
-  this->prad  = prad;
-  this->seedN = seedN;
-  this->pN    = pN;
+DrawSys::DrawSys(const std::string& cur_dir_, const bool crit_out_)
+{
+  draw_crit_max  = power<2, SEED_N>::ret;
+  draw_crit_base = draw_crit_max - 1;
+  chem_is_drawn  = true;
   
-  if(seedN > 15){
+  nv[0] = 1.0; nv[1] = 0.0, nv[2] = 0.0;
+  
+  p_fovy = p_perscenter = p_center2eye = p_base_z = nullptr;
+ 
+  cur_dir  = cur_dir_;
+  crit_out = crit_out_;
+
+  cur_time = time_step = all_time = 0;
+  swt_but  = true; cut_adv = false;
+
+  scL = invL = prad = 0.0;
+
+  pN  = 0;
+  
+  jpgout = nullptr;
+}
+
+//RAII
+DrawSys::~DrawSys(){
+  delete jpgout;
+}
+
+void DrawSys::SetParams(){
+  const std::string f_name = cur_dir + "/macro_data.txt";
+  std::ifstream fin(f_name.c_str());
+
+  int wN = 0, lN = 0;
+  fin >> wN >> lN >> scL >> prad >> all_time >> time_step;
+  pN = wN + lN;
+  all_time -= 3 * time_step;
+
+  if(SEED_N > 15){
     std::cout << "the number of max particle seed is 15" << std::endl;
     exit(1);
   }
 
-  invL = 1./scL;
-  this->prad *= invL;
+  invL = 1.0 / scL;
+
+  //
+  prad = 0.02;
+  //
+
+  prad *= invL;
 
   Particle.resize(pN);
-  p_color.reserve(seedN);
+  p_color.reserve(SEED_N);
   
-  draw_crit.set(); //all true
-  draw_crit_max = Pow_n(2,seedN);
-  draw_crit_base = draw_crit_max - 1;
+  draw_crit.set();
   
-  for(int i=0; i<seedN; i++){
-    int base_b = Pow_n(2,i);
+  for(int i=0; i<SEED_N; i++){
+    const int base_b = Pow_n(2,i);
     draw_crit_mask.push_back(base_b);
   }
 }
 
-void drawsys::SetParamTime(int all_time,int time_step){
-  this->all_time = all_time;
-  this->time_step = time_step;
-  this->all_time -= 3*time_step;
-
-  cur_time = 0;
+void DrawSys::AllocateResource(){
+  jpgout = new Jpegout ();
 }
 
-void drawsys::SetCallBackFunc() const {
-  glutDisplayFunc(drwsys_clbck::disp_callback); 
-  glutTimerFunc(50,drwsys_clbck::timer_callback,0);
-  glutReshapeFunc(drwsys_clbck::resize_callback);
-  glutMouseFunc(moushandl_clbck::mouseclick_callback);
-  glutMotionFunc(moushandl_clbck::mousemotion_callback);
-  glutMouseWheelFunc(moushandl_clbck::mousewheel_callback);
-  glutKeyboardFunc(drwsys_clbck::keyboard_callback);
+void DrawSys::SetCallBackFunc() const {
+  glutDisplayFunc(callbacks::wrap_display); 
+  glutTimerFunc(50, callbacks::wrap_timer, 0);
+  glutReshapeFunc(callbacks::wrap_resize);
+  glutMouseFunc(callbacks::wrap_mclick);
+  glutMotionFunc(callbacks::wrap_mmotion);
+  glutMouseWheelFunc(callbacks::wrap_mwheel);
+  glutKeyboardFunc(callbacks::wrap_keyboard);
 }
 
-void drawsys::SetColor(GLfloat* col){
-  color_t buf;
-  buf.p[0] = col[0];
-  buf.p[1] = col[1];
-  buf.p[2] = col[2];
+void DrawSys::SetColor(const GLfloat* col){
+  const array_t<3> buf = {col[0], col[1], col[2]};
   p_color.push_back(buf);
 }
 
-void drawsys::SetLightPos(GLfloat* pos){
-  light_t lig;
-  lig.l[0] = pos[0];
-  lig.l[1] = pos[1];
-  lig.l[2] = pos[2];
-  lig.l[3] = pos[3];
-  lightpos.push_back(lig);
+void DrawSys::SetLightPos(const GLfloat* pos){
+  const array_t<4> buf = {pos[0], pos[1], pos[2], pos[3]};
+  lightpos.push_back(buf);
 }
 
-void drawsys::GetMouseInfo(double* fov_,double* perscent,double* cent2eye,double* base_z)
+void DrawSys::GetMouseInfo(double* fov_,double* perscent,double* cent2eye,double* base_z)
 {
   p_fovy       = fov_;
   p_perscenter = perscent;
@@ -87,13 +112,15 @@ void drawsys::GetMouseInfo(double* fov_,double* perscent,double* cent2eye,double
   p_base_z     = base_z;
 };
 
-void drawsys::InitWindowSys(int argc,char* argv[]) const {
-  glutInit(&argc, argv); //OpenGL初期化
-  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH); //ディスプレイの表示モードを指定
-  glutCreateWindow(argv[1]); //ウィンドウを開く
+void DrawSys::InitWindow(int argc, char* argv[]) const {
+  glutInitWindowPosition(200, 400); 
+  glutInitWindowSize(1200, 900); 
+  glutInit(&argc, argv); 
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+  glutCreateWindow(argv[1]);
 }
 
-void drawsys::InitCube(){
+void DrawSys::InitCube(){
   vertex[0][0] = 0.;
   vertex[0][1] = 0.;
   vertex[0][2] = 0.;
@@ -163,49 +190,40 @@ void drawsys::InitCube(){
   cubeedge[11][1] = 7;
 }
 
-void drawsys::InitCut(){
-  swt_but  = 0;
-  cut_but  = 0;
-  cut_adv  = 0;
-  cut_axis = 0;
-}
-
-void drawsys::SetWindow() const{
-  glutInitWindowPosition(200,400); //ウィンドウの位置を指定
-  glutInitWindowSize(1200,900); //ウィンドウサイズ指定
-}
-
-void drawsys::InitColor() const{
+void DrawSys::InitColor() const {
   glClearColor(1.0,1.0,1.0,1.0); //(Red,Green,Blue,A) Aは透明度 ウィンドウを塗りつぶす色を指定
   glEnable(GL_DEPTH_TEST); //デプスバッファ使用
   glEnable(GL_LIGHTING); //光源使用
   glEnable(GL_LIGHT0); //光源0を設定
 }
 
-void drawsys::FileManag(){
-  std::string str;
-  str = cur_dir;
-  str += "/particle_data.txt";
+void DrawSys::FileOpen(){
+  const std::string str = cur_dir + "/particle_data.txt";
   fin.open(str.c_str());
+  if(!fin){
+    std::cerr << "File I/O error!" << std::endl;
+    std::cerr << str.c_str() << " No such file or directory." << std::endl;
+    std::cerr << __FILE__ << " " << __LINE__ << std::endl;
+  }
 }
 
-void drawsys::Timer(int value){
+void DrawSys::Timer(int value){
   if (cur_time > all_time){
-    if(crit_out == false){
-      swt_but = 1;
+    if(!crit_out){
+      swt_but = true;
     }else{
       std::cout << "delete objects" << std::endl;
-      delete MouseHandle;
+      delete callbacks::mousehandle;
       delete this;
       exit(0);
     }
   }
   glutPostRedisplay();
-  if(swt_but == 0) cur_time += time_step;
-  glutTimerFunc(50,drwsys_clbck::timer_callback, 0);
+  if(swt_but) cur_time += time_step;
+  glutTimerFunc(50, callbacks::wrap_timer, 0);
 }
 
-void drawsys::Drawxyz(){
+void DrawSys::Drawxyz(){
   const float axis_pos[3] = {0.0, 0.0, 0.0};
   glPushMatrix();
   glTranslatef(axis_pos[0], axis_pos[1], axis_pos[2]);
@@ -226,9 +244,9 @@ void drawsys::Drawxyz(){
   glPopMatrix();
 }
 
-void drawsys::DrawCubic(){
-  GLfloat color[3] = {0.,0.,0.};
-  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,color);
+void DrawSys::DrawCubic(){
+  const GLfloat color[3] = {0.0, 0.0, 0.0};
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glBegin(GL_LINES);
   for (int i = 0; i < 12; ++i) {
     glVertex3dv(vertex[cubeedge[i][0]]);
@@ -237,7 +255,7 @@ void drawsys::DrawCubic(){
   glEnd();
 }
 
-void drawsys::DrawAxis(float d, float s,const float col[][3]){
+void DrawSys::DrawAxis(float d, float s,const float col[][3]){
   const float origin[3] = {-0.05, 0.0, 0.0};
 
   glPushMatrix();
@@ -265,7 +283,7 @@ void drawsys::DrawAxis(float d, float s,const float col[][3]){
   RenderString3D("Z",n_pos[2]);*/
 }
 
-void drawsys::DrawSubAxis(float d, float s,const float col[3]){
+void DrawSys::DrawSubAxis(float d, float s,const float col[3]){
   glBegin(GL_QUAD_STRIP);
   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,col);
   for(float i=0; i<=6.0; i+=1.0){
@@ -280,8 +298,8 @@ void drawsys::DrawSubAxis(float d, float s,const float col[3]){
   glutSolidCone(2.0*d, 4.0*d, 5, 5);
 }
 
-void drawsys::Resize(int w,int h) const {
-  glViewport(0,0,w,h); //ビューポート範囲指定　この場合ウィンドウ全体
+void DrawSys::Resize(int w,int h) const {
+  glViewport(0, 0, w, h); //view port
   
   glMatrixMode(GL_PROJECTION); //透視変換行列設定
   glLoadIdentity(); //変換行列初期化
@@ -291,15 +309,14 @@ void drawsys::Resize(int w,int h) const {
   glMatrixMode(GL_MODELVIEW); //モデルビュー変換行列設定
   glLoadIdentity();
 
-  ///////////////////光源と視点が一緒に動く場合
-  GLfloat light0pos[4];
-  light0pos[0] = lightpos[0].l[0];
-  light0pos[1] = lightpos[0].l[1];
-  light0pos[2] = lightpos[0].l[2];
-  light0pos[3] = lightpos[0].l[3];
+  //光源と視点が一緒に動く場合
+  const GLfloat light0pos[4] = {lightpos[0].p[0],
+				lightpos[0].p[1],
+				lightpos[0].p[2],
+				lightpos[0].p[3]};
 
   glLightfv(GL_LIGHT0, GL_POSITION, light0pos); 
-  /////////////////////////////////////////////
+  //
 
   gluLookAt(p_perscenter[0] + p_center2eye[0],
 	    p_perscenter[1] + p_center2eye[1],
@@ -310,24 +327,16 @@ void drawsys::Resize(int w,int h) const {
 	    p_base_z[0],
 	    p_base_z[1],
 	    p_base_z[2]);
-  //  gluLookAt(5.0,4.0,3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0); 
 }
 
-void drawsys::Display(){
-  static double cut_plane = 1.0;
-  static double cut_skew = 3.0;
-
+void DrawSys::Display(){
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //カラーバッファ,デプスバッファ指定
-  //////////////////////////////光源と視点が一緒に動かず固定されている場合
-  // GLfloat light0pos[4];
-  // light0pos[0] = lightpos[0].l[0];
-  // light0pos[1] = lightpos[0].l[1];
-  // light0pos[2] = lightpos[0].l[2];
-  // light0pos[3] = lightpos[0].l[3];
-
-  // glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
-  //////////////////////////////  
-
+  /*光源と視点が一緒に動かず固定されている場合
+  const GLfloat light0pos[4] = {lightpos[0].p[0],
+				lightpos[0].p[1],
+				lightpos[0].p[2],
+				lightpos[0].p[3]};
+  glLightfv(GL_LIGHT0, GL_POSITION, light0pos);*/
     
   //立方体描画
   //DrawCubic();
@@ -338,175 +347,62 @@ void drawsys::Display(){
   //const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
   //DrawAxis(0.02,0.3,col);
   
-  if(swt_but == 0){
-      LoadParticleDat(); //粒子の座標データを読み込む
+  if(swt_but){
+    LoadParticleDat();
   }
-  switch(cut_but)
-    {
-    case 0://普通に描画
-      for(int i=0; i<pN; i++){
-	const int p_prop = Particle[i].prop;
-	const GLfloat color[3] = {p_color[p_prop].p[0], p_color[p_prop].p[1], p_color[p_prop].p[2]};
-	
-	if(draw_crit[p_prop]){
-	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-	  glPushMatrix();
-	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
-	  glutSolidSphere(prad,10,10);
-	  glPopMatrix();
-	}
-      }
-      break;
-    case 1://ある軸についてcut
-      if(cut_plane < 0.0) cut_plane += 1.0;
-      for(int i=0; i<pN; i++){
-	const int p_prop = Particle[i].prop;
-	GLfloat color[3];
-	color[0] = p_color[p_prop].p[0];
-	color[1] = p_color[p_prop].p[1];
-	color[2] = p_color[p_prop].p[2];
-
-	if((p_prop == 2) && (!Particle[i].chem)){
-	  color[0] = p_color[3].p[0];
-	  color[1] = p_color[3].p[1];
-	  color[2] = p_color[3].p[2];
-	}
-	
-	if(Particle[i].r[cut_axis] < cut_plane && draw_crit[p_prop] && Particle[i].chem){
-	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-	  glPushMatrix();
-	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
-	  glutSolidSphere(prad,10,10);
-	  glPopMatrix();
-	}
-      }
-      if(cut_adv == 0) cut_plane -= 0.01;
-      break;
-    case 2://斜めにカット
-      if(cut_skew < 0.0) cut_skew += 3.0;
-      for(int i=0; i<pN; i++){
-	const int p_prop = Particle[i].prop;
-	GLfloat color[3];
-	color[0] = p_color[p_prop].p[0];
-	color[1] = p_color[p_prop].p[1];
-	color[2] = p_color[p_prop].p[2];
-
-	if((p_prop == 2) && (!Particle[i].chem)){
-	  color[0] = p_color[3].p[0];
-	  color[1] = p_color[3].p[1];
-	  color[2] = p_color[3].p[2];
-	}
-
-	double cut_plane_skew = Particle[i].r[0] + Particle[i].r[1] + Particle[i].r[2];
-	
-	if(cut_plane_skew < cut_skew && draw_crit[p_prop]){
-	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-	  glPushMatrix();
-	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
-	  glutSolidSphere(prad,10,10);
-	  glPopMatrix();
-	}
-      }
-      if(cut_adv == 0) cut_skew -= 0.05;
-      break;
-    case 3://反応していない粒子のみ描画する
-      for(int i=0; i<pN; i++){
-	const int p_prop = Particle[i].prop;
-	GLfloat color[3];
-	color[0] = p_color[p_prop].p[0];
-	color[1] = p_color[p_prop].p[1];
-	color[2] = p_color[p_prop].p[2];
-	
-	if((p_prop == 2) && (!Particle[i].chem)){
-	  color[0] = p_color[3].p[0];
-	  color[1] = p_color[3].p[1];
-	  color[2] = p_color[3].p[2];
-	}
-	
-	if((draw_crit[p_prop] == true) && (Particle[i].chem == false) ){
-	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-	  glPushMatrix();
-	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
-	  glutSolidSphere(prad,10,10);
-	  glPopMatrix();
-	}
-      }
-      break;
-    case 4://反応済粒子のみ描画する
-      for(int i=0; i<pN; i++){
-	const int p_prop = Particle[i].prop;
-	GLfloat color[3];
-	color[0] = p_color[p_prop].p[0];
-	color[1] = p_color[p_prop].p[1];
-	color[2] = p_color[p_prop].p[2];
-
-	if((draw_crit[p_prop] == true) && (Particle[i].chem == true)){
-	  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-	  glPushMatrix();
-	  glTranslated(Particle[i].r[0],Particle[i].r[1],Particle[i].r[2]);
-	  glutSolidSphere(prad,10,10);
-	  glPopMatrix();
-	}
-      }
-      break;
-    }
-
-  //time step 出力
-  std::stringstream ss_time_step;
-  ss_time_step << "time = " << cur_time ;
-  glColor3d(0.,0.,0.);
-  RenderString2D(ss_time_step.str().c_str(),0.8,0.8);
-  glPopAttrib();
   
-  //Jpeg出力
-  const int jpeg_time = jpgout->GetJpegTime();
-  if((crit_out == true) && (jpeg_time < MAX_TIME) ){
-    jpgout->PrepSavingImage();
+  for(int i=0; i<pN; i++){
+    const bool is_drawn = IsDrawnObject(Particle[i]);
+    if(is_drawn) RenderSphere(Particle[i]);
+  }
+
+  RenderCurTime();
+
+  if(crit_out){
+    jpgout->GetWindowInfo();
     jpgout->SnapijgImage();
-    jpgout->SaveImgJpeg(cur_time,all_time,cur_dir,time_step);
+    jpgout->SaveImgJpeg(cur_time, all_time, cur_dir, time_step);
   }
 
   glutSwapBuffers();
 }
 
-void drawsys::KeyBoard(unsigned char key,int x,int y){
+void DrawSys::KeyBoard(unsigned char key,int x,int y){
   const int wid = glutGet(GLUT_WINDOW_WIDTH);
   const int hei = glutGet(GLUT_WINDOW_HEIGHT);
   switch(key)
     {
     case 'b':
-      swt_but = 0;
+      swt_but = true;
       break;
     case 'B':
-      cut_adv = 0;
+      cut_adv = true;
       break;
     case 's':
-      swt_but = 1;
+      swt_but = false;
       break;
     case 'S':
-      cut_adv = 1;
-      break;
-    case 'q':
-      swt_but = 0;
-      cut_but = 0;
+      cut_adv = false;
       break;
     case 'x':
-      swt_but  = 1;
-      cut_adv  = 0;
-      cut_but  = 1; 
-      cut_axis = 0;
+      swt_but  = false;
+      cut_adv  = true;
+      ChangeNormalVector(0);
       break;
     case 'y': 
-      swt_but  = 1;
-      cut_adv  = 0;
-      cut_but  = 1; 
-      cut_axis = 1;
+      swt_but  = false;
+      cut_adv  = true;
+      ChangeNormalVector(1);
       break;
     case 'z':
-      swt_but = 1;
-      cut_adv = 0;
-      cut_but = 1; 
-      cut_axis = 2;
+      swt_but = false;
+      cut_adv = true;
+      ChangeNormalVector(2);
+      break;
+    case 'c':
+      swt_but = false;
+      cut_adv = true;
+      ChangeNormalVector(3);
       break;
     case 'X':
       p_center2eye[0] = 6.0;
@@ -535,55 +431,25 @@ void drawsys::KeyBoard(unsigned char key,int x,int y){
       p_base_z[2] = 0.0;
       Resize(wid,hei);
       break;
-    case 'c':
-      swt_but = 1;
-      cut_adv = 0;
-      cut_but = 2;
-      break;
     case 'h':
-      swt_but = 1;
+      swt_but = false;
       ChgDrawObject();
       Resize(wid,hei);
       break;
-    case '1':
-      draw_crit[0] = 0;
-      draw_crit[1] = 1;
-      draw_crit[2] = 1;
-      draw_crit[3] = 1;
-      Resize(wid,hei);
-      break;
-    case '2':
-      draw_crit[0] = 1;
-      draw_crit[1] = 1;
-      draw_crit[2] = 1;
-      draw_crit[3] = 1;
-      Resize(wid,hei);
-      break;
-    case '3':
-      draw_crit[0] = 0;
-      draw_crit[1] = 0;
-      draw_crit[2] = 1;
-      draw_crit[3] = 1;
-      Resize(wid,hei);
-      break;
     case 'H':
-      cut_but = 3;
       Resize(wid,hei);
+      chem_is_drawn = false;
       break;
     case 'A':
-      cut_but = 4;
       Resize(wid,hei);
-      break;
-    case 'Q':
-      cut_but = 0;
-      Resize(wid,hei);
+      chem_is_drawn = true;
       break;
     default:
       break;		  
     }
 }
 
-void drawsys::PrintDrawInfo() const {
+void DrawSys::PrintDrawInfo() const {
   std::cout << "b restart drawing"       << std::endl;
   std::cout << "s stop drawing"          << std::endl;
   std::cout << "c start cutting(skew)"   << std::endl;
@@ -599,32 +465,30 @@ void drawsys::PrintDrawInfo() const {
   std::cout << "h change visible object."<< std::endl;
 }
 
-void drawsys::LoadParticleDat(){
+void DrawSys::LoadParticleDat(){
   double buf_d[3] = {0.0}; int buf_i = 0, buf_j = 0;
   for(int i=0; i<pN; i++){
-    /*fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
+    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
 	>> buf_d[0]         >> buf_d[1]         >> buf_d[2] 
-	>> Particle[i].prop >> Particle[i].chem >> buf_i >> buf_j;*/
-    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;  //old version
-  }
-  for(int i=0; i<pN; i++){
+	>> Particle[i].prop >> Particle[i].chem >> buf_i >> buf_j;
+    //fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;  //old version
+
     Particle[i].r[0] *= invL;
     Particle[i].r[1] *= invL;
     Particle[i].r[2] *= invL;
   }
 }
 
-void drawsys::ChgDrawObject(){
-  //general changing patern
+void DrawSys::ChgDrawObject(){
   draw_crit_base++;
   if(draw_crit_base == draw_crit_max) draw_crit_base = 1;
   
-  for(int i=0; i<seedN; i++){
-    draw_crit[i] = ((draw_crit_base&draw_crit_mask[i])==draw_crit_mask[i]);
+  for(int i=0; i<SEED_N; i++){
+    draw_crit[i] = (draw_crit_base & draw_crit_mask[i]) == draw_crit_mask[i];
   }
 }
 
-int drawsys::Pow_n(int x, int n) const {
+int DrawSys::Pow_n(int x, int n) const {
   int a = 1;
   while(n > 0){
     if(n % 2 == 0){
@@ -638,7 +502,15 @@ int drawsys::Pow_n(int x, int n) const {
   return a;
 }
 
-void drawsys::RenderString2D(const char *str,float x,float y){
+void DrawSys::RenderCurTime(){
+  std::stringstream ss;
+  ss << "time = " << cur_time ;
+  glColor3d(0.0, 0.0, 0.0);
+  RenderString2D(ss.str().c_str(), 0.8, 0.8);
+  glPopAttrib();
+}
+
+void DrawSys::RenderString2D(const char *str,float x,float y){
   glWindowPos2f(x,y);
 
   while(*str){
@@ -647,16 +519,65 @@ void drawsys::RenderString2D(const char *str,float x,float y){
   }
 }
 
-void drawsys::RenderString3D(const char *str,const float r[3]){
+void DrawSys::RenderString3D(const char *str,const float r[3]){
   glRasterPos3f(r[0], r[1], r[2]);
-  glutBitmapString(font,reinterpret_cast<const unsigned char*>(str));
+  glutBitmapString(font, reinterpret_cast<const unsigned char*>(str));
 }
 
-bool drawsys::InitGlew() const {
-  GLenum err;
-  err = glewInit();
+void DrawSys::RenderSphere(const particle& prtcl){
+  const int prop = prtcl.prop;
+  GLfloat color[3] = {p_color[prop].p[0], p_color[prop].p[1], p_color[prop].p[2]};
+  if(!prtcl.chem && (prop == 2)){
+    color[0] = p_color[3].p[0]; color[1] = p_color[3].p[1]; color[2] = p_color[3].p[2]; 
+  }
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+  glPushMatrix();
+  glTranslated(prtcl.r[0], prtcl.r[1], prtcl.r[2]);
+  
+#ifdef REMOTE
+  glutWireSphere(prad, 10, 10);
+#else
+  glutSolidSphere(prad, 10, 10);
+#endif
+  
+  glPopMatrix();
+}
+
+bool DrawSys::IsDrawnObject(const particle& prtcl){
+  static double cut_plane = 3.0;
+  if(cut_plane < 0.0) cut_plane += 1.0;
+  const double in_prod = nv[0] * prtcl.r[0] + nv[1] * prtcl.r[1] + nv[2] * prtcl.r[2];
+  bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
+  if(chem_is_drawn) ret &= prtcl.chem;
+  if(cut_adv) cut_plane -= 0.03;
+  return ret;
+}
+
+void DrawSys::ChangeNormalVector(int i){
+  switch(i){
+  case 0:
+  case 1:
+  case 2:
+    for(int j=0; j<3; j++){
+      if(j == i){
+	nv[i] = 1.0; 
+      }else{
+	nv[i] = 0.0;
+      }
+    }
+    break;
+  case 3:
+    nv[0] = nv[1] = nv[2] = 1.0 / sqrt(3.0);
+    break;
+  default:
+    break;
+  }
+}
+
+bool DrawSys::InitGlew() const {
+  const GLenum err = glewInit();
   if (err != GLEW_OK){
-    std::cerr << glewGetErrorString(err) << "\n";
+    std::cerr << glewGetErrorString(err) << std::endl;
     return false;
   }
   return true;

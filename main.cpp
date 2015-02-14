@@ -3,11 +3,11 @@
 #include <iostream>
 #include <string>
 
-drawsys* Drawsys;
-mouse_handle* MouseHandle;
+DrawSys*     callbacks::drawsys;
+MouseHandle* callbacks::mousehandle;
 
 namespace {
-  void Warning(){
+  void warning(){
     std::cout << "usage:" << std::endl;
     std::cout << "argv[1] = target directory." << std::endl;
     std::cout << "argv[2] = 0 or 1." << std::endl;
@@ -18,84 +18,48 @@ namespace {
 }
 
 int main(int argc, char* argv[]){
-  if(argc < 3) Warning();
-  char* cur_dir = argv[1];
-  int buff = atoi(argv[2]);
-  if(buff > 1 || buff < 0) Warning();
-  
-  bool crit_out = (bool)buff;
-
-  std::string str = cur_dir;
-  str += "/macro_data.txt";
-  std::ifstream fin(str.c_str());
-  
-  double scL, prad;
-  int wN, lN;
-  int all_time, time_step;
-  fin >> wN >> lN >> scL >> prad >> all_time >> time_step;
-  const int pN = wN + lN;
-  const int seedN = 4;
+  if(argc < 3) warning();
+  const std::string cur_dir = argv[1];
+  const int buff = atoi(argv[2]);
+  if(buff > 1 || buff < 0) warning();
+  const bool crit_out = static_cast<bool>(buff);
 
   //drawing system
-  Drawsys = new drawsys (cur_dir,crit_out);
-  Drawsys->SetParamParticle(scL,prad,seedN,pN);
-  Drawsys->SetParamTime(all_time,time_step);
+  callbacks::drawsys = new DrawSys (cur_dir, crit_out);
+  callbacks::drawsys->SetParams();
+  callbacks::drawsys->AllocateResource();
 
-  //mouse util
-  MouseHandle		   = new mouse_handle (0.5,0.5,0.5,6.,17.);
-  double*	fovy	   = MouseHandle->RetFovy();
-  double*	persCenter = MouseHandle->RetPersCent();
-  double*	center2eye = MouseHandle->RetCenter2eye();
-  double*	ebase_z    = MouseHandle->RetEbaseZ();
-  Drawsys->GetMouseInfo(fovy,persCenter,center2eye,ebase_z);
+  callbacks::mousehandle = new MouseHandle (0.5, 0.5, 0.5, 6.0, 17.0);
+  callbacks::drawsys->GetMouseInfo(callbacks::mousehandle->RetFovy(), 
+				   callbacks::mousehandle->RetPersCent(), 
+				   callbacks::mousehandle->RetCenter2eye(),
+				   callbacks::mousehandle->RetEbaseZ());
 
-  //file manager
-  Drawsys->FileManag();
+  callbacks::drawsys->FileOpen();
   
-  //color set
-  GLfloat water_c[] = {0.000, 0.749, 1.000};
-  GLfloat hyphil_c[] = {1.000, 0.188, 0.188};
-  GLfloat hyphob_c[] = {1.000, 1.000, 0.000};
-  GLfloat reacted_c[] = {0.000, 0.500, 0.000};
-  Drawsys->SetColor(water_c);
-  Drawsys->SetColor(hyphil_c);
-  Drawsys->SetColor(hyphob_c);
-  Drawsys->SetColor(reacted_c);
+  const GLfloat water_c[]	= {0.000, 0.749, 1.000};
+  const GLfloat hyphil_c[]	= {1.000, 0.188, 0.188};
+  const GLfloat hyphob_c[]	= {1.000, 1.000, 0.000};
+  const GLfloat reacted_c[]	= {0.000, 0.500, 0.000};
+  callbacks::drawsys->SetColor(water_c);
+  callbacks::drawsys->SetColor(hyphil_c);
+  callbacks::drawsys->SetColor(hyphob_c);
+  callbacks::drawsys->SetColor(reacted_c);
   
-  //light set
-  //GLfloat light0pos[] = { 3.0,4.0, 5.0,1.};
-  GLfloat light0pos[] = { 0.,0.,-1.,1.};
-  Drawsys->SetLightPos(light0pos);
+  const GLfloat light0pos[] = {0.0, 0.0, -1.0, 1.0};
+  callbacks::drawsys->SetLightPos(light0pos);
 
-  //cube set
-  Drawsys->InitCube();
-
-  //cutting set
-  Drawsys->InitCut();
+  callbacks::drawsys->InitCube();
+  callbacks::drawsys->InitWindow(argc, argv);
+  callbacks::drawsys->InitGlew();
   
-  //window set
-  Drawsys->SetWindow();
-  Drawsys->InitWindowSys(argc,argv);
+  callbacks::drawsys->SetCallBackFunc();
+  callbacks::drawsys->InitColor();
 
-  //glew init
-  Drawsys->InitGlew();
-  
-  //set call_back fuction
-  Drawsys->SetCallBackFunc();
+  callbacks::drawsys->PrintDrawInfo();
+  callbacks::drawsys->Execute();
 
-  //init window color
-  Drawsys->InitColor();
-
-  //print mouse handle info
-  Drawsys->PrintDrawInfo();
-
-  //Execution
-  Drawsys->Execute();
-
-  //delete objects
   std::cout << "delete objects" << std::endl;
-  delete Drawsys;
-  delete MouseHandle;
-
-  return 0;
+  delete callbacks::drawsys;
+  delete callbacks::mousehandle;
 }

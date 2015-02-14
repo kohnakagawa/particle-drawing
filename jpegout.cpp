@@ -1,95 +1,87 @@
-//使い方
 /*
-glutSwapBuffers()を呼び出す直前に以下の用に挿入する。
+How to use
 
-PrepSavingImage();
+Please insert the following sentences before calling glutSwapBuffers()
+
+GetWindowInfo();
 SnapijgImage();
 SaveImgJpeg(current_time,all_time_steps,current_dir);
 
-縦2048ピクセル以上の大きさの画像はdeclineする。
+The picture whose size is larger than 2048 pixel is declined.
 */
+
 #include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <sstream>
-#include <vector>
-
 #include <GL/freeglut.h>
-#include <jpeglib.h>
 #include "jpegout.hpp"
 
-void Jpegout::PrepSavingImage()
+void Jpegout::InitJpegOjbects(jpeg_compress_struct& cinfo, jpeg_error_mgr& jerr) const {
+  cinfo.err = jpeg_std_error(&jerr);
+  jpeg_create_compress(&cinfo);
+}
+
+void Jpegout::SetImageQuality(jpeg_compress_struct& cinfo) const {
+  cinfo.image_width		= b_wid;
+  cinfo.image_height		= b_hei;
+  cinfo.input_components	= RGB_ELEM;
+  cinfo.in_color_space		= JCS_RGB;
+  jpeg_set_defaults(&cinfo);
+  jpeg_set_quality(&cinfo, IMG_QUALITY, TRUE);
+}
+
+FILE* Jpegout::RetOutputFilePtr(const int jpeg_time, const std::string& cur_dir, jpeg_compress_struct& cinfo) const {
+  std::stringstream ss;
+  ss << cur_dir << "/time" << std::setw(numb_digit) << std::setfill('0') << jpeg_time << ".jpeg";
+  FILE *outfile = fopen(ss.str().c_str(), "wb");
+  return outfile;
+}
+
+void Jpegout::WriteImage2File(jpeg_compress_struct& cinfo){
+  jpeg_start_compress(&cinfo, TRUE);
+  for(int i=0; i< b_hei; i++) 
+    img[i] = ptr_buffer + (b_hei - i) * RGB_ELEM * b_wid;
+  jpeg_write_scanlines(&cinfo, img, b_hei);
+  jpeg_finish_compress(&cinfo);
+}
+
+void Jpegout::CleanUp(jpeg_compress_struct& cinfo, FILE* outfile) const {
+  jpeg_destroy_compress(&cinfo);
+  fclose(outfile);
+}
+
+void Jpegout::GetWindowInfo()
 {
   const int wid = glutGet(GLUT_WINDOW_WIDTH);
   const int hei = glutGet(GLUT_WINDOW_HEIGHT);  
   if(wid == b_wid && hei == b_hei) return;
-  if(hei > MAX_HEIGHT){
-    std::cout << "too large size." << std::endl;
-    exit(1); //強制終了
-  }
 
   b_wid = wid;
   b_hei = hei;
   ijg_buffer.clear();
-  ijg_buffer.reserve(3*wid*hei);
+  ijg_buffer.resize(RGB_ELEM * wid * hei);
 }
 
-void Jpegout::SnapijgImage(void)
+void Jpegout::SnapijgImage()
 {
-  glReadBuffer(GL_FRONT); //参考http://www.khronos.org/opengles/sdk/1.1/docs/man/glPixelStorei.xml
-  //フレームバッファの内容を取得  
-  //temp_p_buf = &ijg_buffer[0];
-  std::vector<float>::iterator it_b = ijg_buffer.begin();
-  ptr_buffer = &*it_b;
-  glReadPixels(0,0,b_wid,b_hei,GL_RGB,GL_UNSIGNED_BYTE,ptr_buffer);
+  //http://www.khronos.org/opengles/sdk/1.1/docs/man/glPixelStorei.xml
+  glReadBuffer(GL_FRONT); 
+  ptr_buffer = reinterpret_cast<JSAMPLE*>(&*ijg_buffer.begin());
+  glReadPixels(0, 0, b_wid, b_hei, GL_RGB, GL_UNSIGNED_BYTE, ptr_buffer);
 }
 
-void Jpegout::SaveImgJpeg(int current_time,int all_time_steps, char* current_dir, int time_step)//参考:http://www.math.meiji.ac.jp/~mk/labo/2008/opengl-glut/node10.html
+void Jpegout::SaveImgJpeg(const int current_time, const int all_time_steps, const std::string& current_dir, const int time_step)
 {
-  struct jpeg_compress_struct cinfo;
-  struct jpeg_error_mgr jerr;
-  JSAMPROW img[MAX_HEIGHT];
-  FILE *outfile;
-  JSAMPLE*  fram_buffer = (JSAMPLE*)ptr_buffer;
+  jpeg_compress_struct cinfo;
+  jpeg_error_mgr jerr;
   
-  /*  const int numb_digit = static_cast<int>(log10(all_time_steps/time_step)) + 1;
-  std::stringstream ss;
-  ss << current_dir  << "/time" << std::setw(numb_digit) << std::setfill('0') << (int)current_time/time_step << ".jpeg";*/
+  InitJpegOjbects(cinfo, jerr);
+  FILE* outfile = RetOutputFilePtr(jpeg_time, current_dir, cinfo);
+  jpeg_stdio_dest(&cinfo, outfile);
+  SetImageQuality(cinfo);
+  WriteImage2File(cinfo);
+  CleanUp(cinfo, outfile);
   
-  std::stringstream ss;
-  ss << current_dir << "/time" << std::setw(numb_digit) << std::setfill('0') << jpeg_time << ".jpeg";
-  
-  //JPEGオブジェクトの初期化
-  cinfo.err = jpeg_std_error(&jerr);
-  jpeg_create_compress(&cinfo);
-  
-  //ファイルを開く
-  outfile = fopen(ss.str().c_str(), "wb");
-  jpeg_stdio_dest(&cinfo,outfile);
-
-  //パラメータの設定
-  cinfo.image_width = b_wid;
-  cinfo.image_height = b_hei;
-  cinfo.input_components = 3;
-  cinfo.in_color_space = JCS_RGB;
-
-  //デフォルト値の設定
-  jpeg_set_defaults(&cinfo);
-  
-  //画質の設定
-  jpeg_set_quality(&cinfo, 100, TRUE);
-  
-  //圧縮の開始
-  jpeg_start_compress(&cinfo, TRUE);
-
-  for(int i=0; i< b_hei; i++){
-      img[i] = fram_buffer + (b_hei - i) * 3 * b_wid;
-    }
-
-  jpeg_write_scanlines(&cinfo, img, b_hei);
-  jpeg_finish_compress(&cinfo); //圧縮の終了
-  jpeg_destroy_compress(&cinfo);//JPEGオブジェクトの破棄
-  fclose(outfile); //ファイルを閉じる
-
   jpeg_time++;
+  if(jpeg_time > MAX_TIME) std::cerr << "jpeg_time exceeds predefined maximum time" << std::endl;
 }

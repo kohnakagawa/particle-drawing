@@ -1,50 +1,54 @@
 #pragma once
-#include <GL/glew.h>
-#include <cmath>
-#include <sstream>
 #include <vector>
 #include <bitset>
 #include <fstream>
-
 #include <GL/freeglut.h>
-#include "jpegout.hpp"
 
-class drawsys{
+class Jpegout;
+
+class DrawSys{
 private:
-  //color
-  struct color_t{
-    GLfloat p[3];
+  enum{
+    SEED_N = 4,
   };
-  std::vector<color_t>p_color;
-  //light
-  struct light_t{
-    GLfloat l[4];
-  };
-  std::vector<light_t>lightpos; 
 
-  std::bitset<15> draw_crit;
-  int draw_crit_max;
-  int draw_crit_base;
+  template<int size>
+  struct array_t{
+    GLfloat p[size];
+  };
+
+  template<int val, int n>
+  struct power{
+    static const int ret = val * power<val, n - 1>::ret;
+  };
+  
+  template<int val>
+  struct power<val, 0>{
+    static const int ret = val;
+  };
+  
+  std::vector<array_t<3> > p_color;
+  std::vector<array_t<4> > lightpos; 
+
+  std::bitset<15>  draw_crit;
   std::vector<int> draw_crit_mask;
   
+  int draw_crit_max, draw_crit_base;
+  bool chem_is_drawn;
+  
   int cubeedge[12][2];
-  GLdouble vertex[8][3]; //立方体の各頂点
+  GLdouble vertex[8][3];
+  
+  GLfloat nv[3];
 
-  double* p_fovy;
-  double* p_perscenter;
-  double* p_center2eye;
-  double* p_base_z;
+  double *p_fovy, *p_perscenter, *p_center2eye, *p_base_z;
+
+  std::string cur_dir;
+  bool crit_out;
   
-  //time events
-  int cur_time;
-  int time_step;
-  int all_time;
+  int cur_time, time_step, all_time;
   
-  //cutting events
-  int swt_but;
-  int cut_but;
-  int cut_adv;
-  int cut_axis;
+  bool swt_but, cut_adv;
 
   //particle system
   struct particle{
@@ -52,52 +56,48 @@ private:
     int prop;    //property
     bool chem;
   };
-  double scL,invL;
-  double prad;
+  double scL, invL, prad;
   std::vector<particle> Particle;
-  int seedN;
   int pN;
 
-  void *font;
+  void *font = GLUT_BITMAP_TIMES_ROMAN_24;
   
-  //util
-  char* cur_dir;
+
   std::ifstream fin;
   
-  //out jpeg
-  bool crit_out;
-  Jpegout* jpgout;
-  enum{MAX_TIME = 10000000};
-
+  Jpegout *jpgout;
+  
   void Drawxyz();
   void DrawCubic();
   void DrawAxis(float   , float, const float[][3]);
   void DrawSubAxis(float, float, const float[3]);
+
+  void RenderCurTime();
   void RenderString2D(const char *,float,float);
   void RenderString3D(const char *,const float[3]);
+
+  void RenderSphere(const particle& prtcl);
+  bool IsDrawnObject(const particle& prtcl);
+  
+  void ChangeNormalVector(int i);
+  
 public:
-  drawsys(char* cur_dir,bool crit_out){
-    this->cur_dir = cur_dir;
-    this->crit_out = crit_out;
-    jpgout = new Jpegout (MAX_TIME);
-    font = GLUT_BITMAP_TIMES_ROMAN_24;
-  };
-  ~drawsys(){delete jpgout;};
-  void SetParamParticle(double,double,int,int);
-  void SetParamTime(int,int);
+  DrawSys(const std::string& cur_dir_, const bool crit_out_);
+  ~DrawSys();
+  void SetParams();
+  void AllocateResource();
+
   void SetCallBackFunc() const;
-  void SetWindow() const;
-  void SetColor(GLfloat*);
-  void SetLightPos(GLfloat*);
-  void GetMouseInfo(double*_,double*,double*,double*);
+  void SetColor(const GLfloat*);
+  void SetLightPos(const GLfloat*);
+  void GetMouseInfo(double*, double*, double*, double*);
 
   void InitCube();
-  void InitCut();
-  void InitWindowSys(int argc,char* argv[]) const;
+  void InitWindow(int argc, char* argv[]) const;
   void InitColor() const;
   bool InitGlew() const;
   
-  void FileManag();
+  void FileOpen();
   
   void Timer(int value);
   void LoadParticleDat();
@@ -111,17 +111,16 @@ public:
 
   void Execute(){
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-    glutMainLoop();//無限ループ
+    glutMainLoop();
   }
 
-  int Pow_n(int,int) const;
+  int Pow_n(int, int) const;
 };
 
-extern drawsys* Drawsys;
-
-namespace drwsys_clbck{
-  extern void disp_callback(void);
-  extern void timer_callback(int value);
-  extern void resize_callback(int w,int h);
-  extern void keyboard_callback(unsigned char key,int x,int y);
+namespace callbacks{
+  extern DrawSys* drawsys;
+  extern void wrap_display();
+  extern void wrap_timer(int value);
+  extern void wrap_resize(int w, int h);
+  extern void wrap_keyboard(unsigned char key, int x, int y);
 }

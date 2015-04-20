@@ -7,7 +7,7 @@ class MouseHandle{
     inline quaternion(){
       t = x = y = z = 0.0;
     }
-    inline explicit quaternion(const double a[]):t(0.0), x(a[0]), y(a[1]), z(a[2]){}
+    inline explicit quaternion(const double a[]) : t(0.0), x(a[0]), y(a[1]), z(a[2]) {}
     inline quaternion(const double t_, const double x_, const double y_, const double z_):t(t_), x(x_), y(y_), z(z_){}
     inline quaternion(const double radian, double axis[]) {
       const double inv_dr = 1.0 / sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);

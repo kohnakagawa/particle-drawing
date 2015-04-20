@@ -384,6 +384,10 @@ void DrawSys::KeyBoard(unsigned char key,int x,int y){
       swt_but = true;
       cut_but = false;
       break;
+    case 'Q':
+      swt_but = false;
+      cut_but = false;
+      break;
     case 'x':
       swt_but  = false;
       cut_adv  = cut_but = true;

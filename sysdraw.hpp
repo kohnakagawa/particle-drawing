@@ -29,7 +29,6 @@ private:
   
   std::vector<array_t<3> > p_color;
   std::vector<array_t<4> > lightpos; 
-
   std::bitset<15>  draw_crit;
   std::vector<int> draw_crit_mask;
   
@@ -39,7 +38,8 @@ private:
   int cubeedge[12][2];
   GLdouble vertex[8][3];
   
-  GLfloat nv[3];
+  GLfloat nv[3], cut_plane = 0.5;
+  
 
   double *p_fovy, *p_perscenter, *p_center2eye, *p_base_z;
 
@@ -47,8 +47,7 @@ private:
   bool crit_out;
   
   int cur_time, time_step, all_time;
-  
-  bool swt_but, cut_adv;
+  bool swt_but, cut_but, cut_adv;
 
   //particle system
   struct particle{
@@ -56,12 +55,12 @@ private:
     int prop;    //property
     bool chem;
   };
-  double scL, invL, prad;
+  double scL, invL, prad, invhL;
+  double box_size[3], inv_box_size[3];
   std::vector<particle> Particle;
   int pN;
 
   void *font = GLUT_BITMAP_TIMES_ROMAN_24;
-  
 
   std::ifstream fin;
   
@@ -80,6 +79,7 @@ private:
   bool IsDrawnObject(const particle& prtcl);
   
   void ChangeNormalVector(int i);
+  void ChangeCrossSection();
   
 public:
   DrawSys(const std::string& cur_dir_, const bool crit_out_);

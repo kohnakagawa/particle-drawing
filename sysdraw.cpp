@@ -33,9 +33,11 @@ DrawSys::DrawSys(const std::string& cur_dir_, const bool crit_out_)
   crit_out = crit_out_;
 
   cur_time = time_step = all_time = 0;
-  swt_but  = true; cut_adv = false;
+  swt_but  = true; cut_adv = false; cut_but = false;
 
-  scL = invL = prad = 0.0;
+  scL = invL = prad = invhL = 0.0;
+  box_size[0] = box_size[1] = box_size[2] = 0.0;
+  inv_box_size[0] = inv_box_size[1] = inv_box_size[2] = 0.0;
 
   pN  = 0;
   
@@ -56,16 +58,10 @@ void DrawSys::SetParams(){
   pN = wN + lN;
   all_time -= 3 * time_step;
 
-  if(SEED_N > 15){
-    std::cout << "the number of max particle seed is 15" << std::endl;
-    exit(1);
-  }
+  static_assert(SEED_N <= 15, "the number of max particle seed is 15");
 
   invL = 1.0 / scL;
-
-  //
-  prad = 0.02;
-  //
+  invhL = 0.5 * invL;
 
   prad *= invL;
 
@@ -208,9 +204,9 @@ void DrawSys::FileOpen(){
 }
 
 void DrawSys::Timer(int value){
-  if (cur_time > all_time){
+  if(cur_time > all_time){
     if(!crit_out){
-      swt_but = true;
+      swt_but = false;
     }else{
       std::cout << "delete objects" << std::endl;
       delete callbacks::mousehandle;
@@ -338,6 +334,15 @@ void DrawSys::Display(){
 				lightpos[0].p[3]};
   glLightfv(GL_LIGHT0, GL_POSITION, light0pos);*/
     
+  if(swt_but){
+    LoadParticleDat();
+  }
+  
+  for(int i=0; i<pN; i++){
+    if( IsDrawnObject(Particle[i]) ) RenderSphere(Particle[i]);
+  }
+  ChangeCrossSection();
+
   //立方体描画
   //DrawCubic();
 
@@ -345,16 +350,7 @@ void DrawSys::Display(){
   //Drawxyz();
 
   //const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
-  //DrawAxis(0.02,0.3,col);
-  
-  if(swt_but){
-    LoadParticleDat();
-  }
-  
-  for(int i=0; i<pN; i++){
-    const bool is_drawn = IsDrawnObject(Particle[i]);
-    if(is_drawn) RenderSphere(Particle[i]);
-  }
+  //DrawAxis(0.02, 0.3, col);
 
   RenderCurTime();
 
@@ -384,25 +380,33 @@ void DrawSys::KeyBoard(unsigned char key,int x,int y){
     case 'S':
       cut_adv = false;
       break;
+    case 'q':
+      swt_but = true;
+      cut_but = false;
+      break;
     case 'x':
       swt_but  = false;
-      cut_adv  = true;
+      cut_adv  = cut_but = true;
       ChangeNormalVector(0);
+      Resize(wid, hei);
       break;
     case 'y': 
       swt_but  = false;
-      cut_adv  = true;
+      cut_adv  = cut_but = true;
       ChangeNormalVector(1);
+      Resize(wid, hei);
       break;
     case 'z':
       swt_but = false;
-      cut_adv = true;
+      cut_adv = cut_but = true;
       ChangeNormalVector(2);
+      Resize(wid, hei);
       break;
     case 'c':
       swt_but = false;
-      cut_adv = true;
+      cut_adv = cut_but = true;
       ChangeNormalVector(3);
+      Resize(wid, hei);
       break;
     case 'X':
       p_center2eye[0] = 6.0;
@@ -411,7 +415,7 @@ void DrawSys::KeyBoard(unsigned char key,int x,int y){
       p_base_z[0] = 0.0;
       p_base_z[1] = 0.0;
       p_base_z[2] = 1.0;
-      Resize(wid,hei);
+      Resize(wid, hei);
       break;
     case 'Y':
       p_center2eye[0] = 0.5;
@@ -420,7 +424,7 @@ void DrawSys::KeyBoard(unsigned char key,int x,int y){
       p_base_z[0] = 0.0;
       p_base_z[1] = 0.0;
       p_base_z[2] = 1.0;
-      Resize(wid,hei);
+      Resize(wid, hei);
       break;
     case 'Z':
       p_center2eye[0] = 0.5;
@@ -429,20 +433,20 @@ void DrawSys::KeyBoard(unsigned char key,int x,int y){
       p_base_z[0] = 0.0;
       p_base_z[1] = 1.0;
       p_base_z[2] = 0.0;
-      Resize(wid,hei);
+      Resize(wid, hei);
       break;
     case 'h':
       swt_but = false;
       ChgDrawObject();
-      Resize(wid,hei);
+      Resize(wid, hei);
       break;
     case 'H':
-      Resize(wid,hei);
       chem_is_drawn = false;
+      Resize(wid,hei);
       break;
     case 'A':
-      Resize(wid,hei);
       chem_is_drawn = true;
+      Resize(wid,hei);
       break;
     default:
       break;		  
@@ -467,15 +471,28 @@ void DrawSys::PrintDrawInfo() const {
 
 void DrawSys::LoadParticleDat(){
   double buf_d[3] = {0.0}; int buf_i = 0, buf_j = 0;
+  
   for(int i=0; i<pN; i++){
     fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
 	>> buf_d[0]         >> buf_d[1]         >> buf_d[2] 
 	>> Particle[i].prop >> Particle[i].chem >> buf_i >> buf_j;
-    //fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] >> Particle[i].prop >> Particle[i].chem;  //old version
 
+    if(box_size[0] < Particle[i].r[0]) box_size[0] = Particle[i].r[0];
+    if(box_size[1] < Particle[i].r[1]) box_size[1] = Particle[i].r[1];
+    if(box_size[2] < Particle[i].r[2]) box_size[2] = Particle[i].r[2];
+  }
+
+  box_size[0] *= invL; box_size[1] *= invL; box_size[2] *= invL;
+  inv_box_size[0] = 1.0 / box_size[0]; inv_box_size[1] = 1.0 / box_size[1]; inv_box_size[2] = 1.0 / box_size[2];
+
+  for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;
     Particle[i].r[1] *= invL;
     Particle[i].r[2] *= invL;
+
+    Particle[i].r[0] -= box_size[0] * 0.5;
+    Particle[i].r[1] -= box_size[1] * 0.5;
+    Particle[i].r[2] -= box_size[2] * 0.5;    
   }
 }
 
@@ -533,38 +550,35 @@ void DrawSys::RenderSphere(const particle& prtcl){
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glPushMatrix();
   glTranslated(prtcl.r[0], prtcl.r[1], prtcl.r[2]);
-  
-#ifdef REMOTE
-  glutWireSphere(prad, 10, 10);
-#else
   glutSolidSphere(prad, 10, 10);
-#endif
-  
   glPopMatrix();
 }
 
 bool DrawSys::IsDrawnObject(const particle& prtcl){
-  static double cut_plane = 3.0;
-  if(cut_plane < 0.0) cut_plane += 1.0;
-  const double in_prod = nv[0] * prtcl.r[0] + nv[1] * prtcl.r[1] + nv[2] * prtcl.r[2];
-  bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
-  if(chem_is_drawn) ret &= prtcl.chem;
-  if(cut_adv) cut_plane -= 0.03;
-  return ret;
+  if(!cut_but){
+    bool ret = draw_crit[prtcl.prop];
+    if(chem_is_drawn) ret &= prtcl.chem;
+    return ret;
+  }else{
+    const double in_prod = nv[0] * prtcl.r[0] * inv_box_size[0] + nv[1] * prtcl.r[1] * inv_box_size[1] + nv[2] * prtcl.r[2] * inv_box_size[2];
+    
+    bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
+    if(chem_is_drawn) ret &= prtcl.chem;
+    return ret;
+  }
 }
 
 void DrawSys::ChangeNormalVector(int i){
+  nv[0] = nv[1] = nv[2] = 0.0;
   switch(i){
   case 0:
+    nv[0] = 1.0;
+    break;
   case 1:
+    nv[1] = 1.0;
+    break;
   case 2:
-    for(int j=0; j<3; j++){
-      if(j == i){
-	nv[i] = 1.0; 
-      }else{
-	nv[i] = 0.0;
-      }
-    }
+    nv[2] = 1.0;
     break;
   case 3:
     nv[0] = nv[1] = nv[2] = 1.0 / sqrt(3.0);
@@ -572,6 +586,11 @@ void DrawSys::ChangeNormalVector(int i){
   default:
     break;
   }
+}
+
+void DrawSys::ChangeCrossSection(){
+  if(cut_plane <= -0.5) cut_plane += 1.0;
+  if(cut_adv) cut_plane -= 0.05;
 }
 
 bool DrawSys::InitGlew() const {

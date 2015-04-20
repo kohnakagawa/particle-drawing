@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
   callbacks::drawsys->SetParams();
   callbacks::drawsys->AllocateResource();
 
-  callbacks::mousehandle = new MouseHandle (0.5, 0.5, 0.5, 6.0, 17.0);
+  callbacks::mousehandle = new MouseHandle (0.0, 0.0, 0.0, 6.0, 17.0);
   callbacks::drawsys->GetMouseInfo(callbacks::mousehandle->RetFovy(), 
 				   callbacks::mousehandle->RetPersCent(), 
 				   callbacks::mousehandle->RetCenter2eye(),

@@ -10,11 +10,11 @@ SaveImgJpeg(current_time,all_time_steps,current_dir);
 The picture whose size is larger than 2048 pixel is declined.
 */
 
+#include "jpegout.hpp"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <GL/freeglut.h>
-#include "jpegout.hpp"
 
 void Jpegout::InitJpegOjbects(jpeg_compress_struct& cinfo, jpeg_error_mgr& jerr) const {
   cinfo.err = jpeg_std_error(&jerr);
@@ -33,15 +33,14 @@ void Jpegout::SetImageQuality(jpeg_compress_struct& cinfo) const {
 FILE* Jpegout::RetOutputFilePtr(const int jpeg_time, const std::string& cur_dir, jpeg_compress_struct& cinfo) const {
   std::stringstream ss;
   ss << cur_dir << "/time" << std::setw(numb_digit) << std::setfill('0') << jpeg_time << ".jpeg";
-  FILE *outfile = fopen(ss.str().c_str(), "wb");
-  return outfile;
+  return fopen(ss.str().c_str(), "wb");
 }
 
 void Jpegout::WriteImage2File(jpeg_compress_struct& cinfo){
   jpeg_start_compress(&cinfo, TRUE);
   for(int i=0; i< b_hei; i++) 
     img[i] = ptr_buffer + (b_hei - i) * RGB_ELEM * b_wid;
-  jpeg_write_scanlines(&cinfo, img, b_hei);
+  jpeg_write_scanlines(&cinfo, &*img.begin(), b_hei);
   jpeg_finish_compress(&cinfo);
 }
 
@@ -60,6 +59,7 @@ void Jpegout::GetWindowInfo()
   b_hei = hei;
   ijg_buffer.clear();
   ijg_buffer.resize(RGB_ELEM * wid * hei);
+  img.resize(hei);
 }
 
 void Jpegout::SnapijgImage()

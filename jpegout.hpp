@@ -6,7 +6,6 @@
 #include <jpeglib.h>
 
 class Jpegout{
-private:
   enum{
     MAX_TIME = 1000000,
     RGB_ELEM = 3,
@@ -15,9 +14,10 @@ private:
   
   int b_wid, b_hei;
   std::vector<float> ijg_buffer;
-  int jpeg_time, numb_digit;
+  int jpeg_time;
+  static const int numb_digit = static_cast<int>(log10(MAX_TIME) ) + 1;
 
-  JSAMPROW* img;
+  std::vector<JSAMPROW> img;
   JSAMPLE* ptr_buffer;
   
   void InitJpegOjbects(jpeg_compress_struct& cinfo, jpeg_error_mgr& jerr) const ;
@@ -26,9 +26,7 @@ private:
   void WriteImage2File(jpeg_compress_struct& cinfo);
   void CleanUp(jpeg_compress_struct& cinfo, FILE* outfile) const ;
 public:
-  Jpegout():b_wid(-1), b_hei(-1), jpeg_time(0), img(nullptr), ptr_buffer(nullptr){
-    numb_digit = static_cast<int>(log10(MAX_TIME) ) + 1;
-  }
+  Jpegout():b_wid(-1), b_hei(-1), jpeg_time(0), ptr_buffer(nullptr){}
   void GetWindowInfo();
   void SnapijgImage();
   void SaveImgJpeg(const int current_time, const int all_time_steps, const std::string& cur_dir, const int time_step);

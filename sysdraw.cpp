@@ -189,6 +189,10 @@ void DrawSys::InitCube(){
 void DrawSys::InitColor() const {
   glClearColor(1.0,1.0,1.0,1.0); //(Red,Green,Blue,A) Aは透明度 ウィンドウを塗りつぶす色を指定
   glEnable(GL_DEPTH_TEST); //デプスバッファ使用
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+
   glEnable(GL_LIGHTING); //光源使用
   glEnable(GL_LIGHT0); //光源0を設定
 }

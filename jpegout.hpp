@@ -15,7 +15,7 @@ class Jpegout{
   int b_wid, b_hei;
   std::vector<float> ijg_buffer;
   int jpeg_time;
-  static const int numb_digit = static_cast<int>(log10(MAX_TIME) ) + 1;
+  const int numb_digit = static_cast<int>(log10(MAX_TIME) ) + 1;
 
   std::vector<JSAMPROW> img;
   JSAMPLE* ptr_buffer;

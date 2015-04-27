@@ -7,7 +7,6 @@
 class Jpegout;
 
 class DrawSys{
-private:
   enum{
     SEED_N = 4,
   };

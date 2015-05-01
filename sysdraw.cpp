@@ -204,6 +204,7 @@ void DrawSys::FileOpen(){
     std::cerr << "File I/O error!" << std::endl;
     std::cerr << str.c_str() << " No such file or directory." << std::endl;
     std::cerr << __FILE__ << " " << __LINE__ << std::endl;
+    exit(1);
   }
 }
 
@@ -256,7 +257,7 @@ void DrawSys::DrawCubic(){
 }
 
 void DrawSys::DrawAxis(float d, float s,const float col[][3]){
-  const float origin[3] = {-0.05, 0.0, 0.0};
+  const float origin[3] = {-1.0, 0.0, 0.0};
 
   glPushMatrix();
   glTranslatef(origin[0], origin[1], origin[2]);
@@ -353,8 +354,8 @@ void DrawSys::Display(){
   //xyz軸描画
   //Drawxyz();
 
-  //const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
-  //DrawAxis(0.02, 0.3, col);
+  const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
+  DrawAxis(0.02, 0.3, col);
 
   RenderCurTime();
 

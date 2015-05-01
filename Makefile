@@ -1,7 +1,8 @@
-CXX = g++
+CXX = icpc
+#CXX = g++
 
 #CFLAGS = -g -O0 -Wall -std=c++11
-CFLAGS = -O3 -std=c++11
+CFLAGS = -std=c++11 -O3 -xHOST -no-prec-div
 
 OBJECTS = sysdraw.o mousehandle.o jpegout.o main.o
 TARGET = cDraw

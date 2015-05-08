@@ -483,7 +483,7 @@ void DrawSys::LoadParticleDat(){
   
   for(int i=0; i<pN; i++){
     fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
-	>> buf_d[0]         >> buf_d[1]         >> buf_d[2] 
+	>> buf_d[0]         >> buf_d[1]         >> buf_d[2]
 	>> Particle[i].prop >> Particle[i].chem >> buf_i >> buf_j;
 
     if(box_size[0] < Particle[i].r[0]) box_size[0] = Particle[i].r[0];
@@ -572,7 +572,19 @@ bool DrawSys::IsDrawnObject(const particle& prtcl){
     const double in_prod = nv[0] * prtcl.r[0] * inv_box_size[0] + nv[1] * prtcl.r[1] * inv_box_size[1] + nv[2] * prtcl.r[2] * inv_box_size[2];
     
     bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
+
+#if 0
     if(chem_is_drawn) ret &= prtcl.chem;
+#else
+    if(chem_is_drawn){
+      if(prtcl.prop == 1){
+	ret &= prtcl.chem;
+      }else if(prtcl.prop == 2){
+	ret &= true;
+      }
+    }
+#endif
+
     return ret;
   }
 }
@@ -599,7 +611,7 @@ void DrawSys::ChangeNormalVector(int i){
 
 void DrawSys::ChangeCrossSection(){
   if(cut_plane <= -0.5) cut_plane += 1.0;
-  if(cut_adv) cut_plane -= 0.05;
+  if(cut_adv) cut_plane -= 0.02;
 }
 
 bool DrawSys::InitGlew() const {

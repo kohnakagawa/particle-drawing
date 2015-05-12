@@ -12,7 +12,7 @@ void callbacks::wrap_mwheel(int wheel_n, int direct, int x, int y){
   callbacks::mousehandle->MouseWheel(wheel_n, direct, x, y);
 }
 
-MouseHandle::MouseHandle(double center_x, double center_y, double center_z, double eDist, double fov){
+MouseHandle::MouseHandle(float center_x, float center_y, float center_z, float eDist, float fov){
   eyeDistance  = eDist;
     
   persCenter[0] = center_x;
@@ -35,7 +35,7 @@ MouseHandle::MouseHandle(double center_x, double center_y, double center_z, doub
   x_bef = y_bef = but = 0;
 }
 
-void MouseHandle::RotPersVect(double* vec, double* rot_axis, double theta)
+void MouseHandle::RotPersVect(float* vec, float* rot_axis, float theta)
 {
   quaternion quate_vec(0.0, vec[0], vec[1], vec[2]);
   quaternion quate_axis(theta, rot_axis);
@@ -66,13 +66,13 @@ void MouseHandle::MouseMotion(int x, int y)
   const int  width = glutGet(GLUT_WINDOW_WIDTH);
   const int  height = glutGet(GLUT_WINDOW_HEIGHT);
   if(but == 1){
-    const double dx = double (x - x_bef);
-    const double dy = double (y - y_bef);
-    const double theta_u = dx * 0.005;
-    const double theta_w = -dy * 0.005;
+    const float dx = float (x - x_bef);
+    const float dy = float (y - y_bef);
+    const float theta_u = dx * 0.005;
+    const float theta_w = -dy * 0.005;
       
-    double vec_u[3] = {ebase_z[0], ebase_z[1], ebase_z[2]};
-    double vec_w[3] = {0.0, 0.0, 0.0};
+    float vec_u[3] = {ebase_z[0], ebase_z[1], ebase_z[2]};
+    float vec_w[3] = {0.0, 0.0, 0.0};
     CrossProduct(center2eye, vec_u, vec_w);
 
     RotPersVect(center2eye, vec_u, theta_u);

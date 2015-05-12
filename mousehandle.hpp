@@ -3,19 +3,19 @@
 
 class MouseHandle{
   struct quaternion{
-    double t, x, y, z;
+    float t, x, y, z;
     inline quaternion(){
       t = x = y = z = 0.0;
     }
-    inline explicit quaternion(const double a[]) : t(0.0), x(a[0]), y(a[1]), z(a[2]) {}
-    inline quaternion(const double t_, const double x_, const double y_, const double z_):t(t_), x(x_), y(y_), z(z_){}
-    inline quaternion(const double radian, double axis[]) {
-      const double inv_dr = 1.0 / sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+    inline explicit quaternion(const float a[]) : t(0.0), x(a[0]), y(a[1]), z(a[2]) {}
+    inline quaternion(const float t_, const float x_, const float y_, const float z_):t(t_), x(x_), y(y_), z(z_){}
+    inline quaternion(const float radian, float axis[]) {
+      const float inv_dr = 1.0 / sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
       axis[0] *= inv_dr;
       axis[1] *= inv_dr;
       axis[2] *= inv_dr;
 
-      const double sss = std::sin(0.5 * radian);
+      const float sss = std::sin(0.5 * radian);
       
       t = std::cos(0.5 * radian);
       x = sss * axis[0];
@@ -37,34 +37,34 @@ class MouseHandle{
       z *= -1.0;
     }
     
-    inline void ret_array3(double vec[3]){
+    inline void ret_array3(float vec[3]){
       vec[0] = x; vec[1] = y; vec[2] = z;
     }
   };
   
-  double phi, theta, fovy;
-  double eyeDistance;
-  double persCenter[3];
-  double center2eye[3];  
-  double ebase_z[3];
+  float phi, theta, fovy;
+  float eyeDistance;
+  float persCenter[3];
+  float center2eye[3];  
+  float ebase_z[3];
   
   int x_bef, y_bef;
   int but;
   
-  void CrossProduct(const double* a, const double* b, double* c) const {
+  void CrossProduct(const float* a, const float* b, float* c) const {
     c[0] = a[1] * b[2] - a[2] * b[1];
     c[1] = a[2] * b[0] - a[0] * b[2];
     c[2] = a[0] * b[1] - a[1] * b[0];
   }
 public:
-  MouseHandle(double, double, double, double, double);
+  MouseHandle(float, float, float, float, float);
 
-  double* RetFovy(){return &fovy;};
-  double* RetPersCent(){return persCenter;};
-  double* RetCenter2eye(){return center2eye;};
-  double* RetEbaseZ(){return ebase_z;};
+  float* RetFovy(){return &fovy;};
+  float* RetPersCent(){return persCenter;};
+  float* RetCenter2eye(){return center2eye;};
+  float* RetEbaseZ(){return ebase_z;};
 
-  void RotPersVect(double*, double*, double);
+  void RotPersVect(float*, float*, float);
   void MouseClick(int, int, int, int);
   void MouseMotion(int, int);
   void MouseWheel(int, int, int, int);

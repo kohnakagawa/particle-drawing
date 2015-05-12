@@ -2,6 +2,7 @@
 #include <vector>
 #include <bitset>
 #include <fstream>
+#include <array>
 #include <GL/freeglut.h>
 
 class Jpegout;
@@ -9,11 +10,6 @@ class Jpegout;
 class DrawSys{
   enum{
     SEED_N = 4,
-  };
-
-  template<int size>
-  struct array_t{
-    GLfloat p[size];
   };
 
   template<int val, int n>
@@ -26,8 +22,8 @@ class DrawSys{
     static const int ret = val;
   };
   
-  std::vector<array_t<3> > p_color;
-  std::vector<array_t<4> > lightpos; 
+  std::vector<std::array<GLfloat, 3> > p_color;
+  std::vector<std::array<GLfloat, 4> > lightpos; 
   std::bitset<15>  draw_crit;
   std::vector<int> draw_crit_mask;
   
@@ -38,9 +34,8 @@ class DrawSys{
   GLdouble vertex[8][3];
   
   GLfloat nv[3], cut_plane = 0.5;
-  
 
-  double *p_fovy, *p_perscenter, *p_center2eye, *p_base_z;
+  float *p_fovy, *p_perscenter, *p_center2eye, *p_base_z;
 
   std::string cur_dir;
   bool crit_out;
@@ -50,17 +45,16 @@ class DrawSys{
 
   //particle system
   struct particle{
-    double r[3]; //position
+    float r[3]; //position
     int prop;    //property
     bool chem;
   };
-  double scL, invL, prad, invhL;
-  double box_size[3], inv_box_size[3];
+  float scL, invL, prad, invhL, box_size[3], inv_box_size[3];
   std::vector<particle> Particle;
   int pN;
 
   void *font = GLUT_BITMAP_TIMES_ROMAN_24;
-
+  
   std::ifstream fin;
   
   Jpegout *jpgout;
@@ -89,7 +83,7 @@ public:
   void SetCallBackFunc() const;
   void SetColor(const GLfloat*);
   void SetLightPos(const GLfloat*);
-  void GetMouseInfo(double*, double*, double*, double*);
+  void GetMouseInfo(float*, float*, float*, float*);
 
   void InitCube();
   void InitWindow(int argc, char* argv[]) const;

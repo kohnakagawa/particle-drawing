@@ -91,16 +91,16 @@ void DrawSys::SetCallBackFunc() const {
 }
 
 void DrawSys::SetColor(const GLfloat* col){
-  const array_t<3> buf = {col[0], col[1], col[2]};
+  const std::array<GLfloat, 3> buf = {col[0], col[1], col[2]};
   p_color.push_back(buf);
 }
 
 void DrawSys::SetLightPos(const GLfloat* pos){
-  const array_t<4> buf = {pos[0], pos[1], pos[2], pos[3]};
+  const std::array<GLfloat ,4> buf = {pos[0], pos[1], pos[2], pos[3]};
   lightpos.push_back(buf);
 }
 
-void DrawSys::GetMouseInfo(double* fov_,double* perscent,double* cent2eye,double* base_z)
+void DrawSys::GetMouseInfo(float* fov_, float* perscent, float* cent2eye, float* base_z)
 {
   p_fovy       = fov_;
   p_perscenter = perscent;
@@ -204,7 +204,7 @@ void DrawSys::FileOpen(){
     std::cerr << "File I/O error!" << std::endl;
     std::cerr << str.c_str() << " No such file or directory." << std::endl;
     std::cerr << __FILE__ << " " << __LINE__ << std::endl;
-    exit(1);
+    std::exit(1);
   }
 }
 
@@ -276,6 +276,7 @@ void DrawSys::DrawAxis(float d, float s,const float col[][3]){
   DrawSubAxis(d,s,col[2]);
   glPopMatrix();
 
+  //Render Axis name
   /*const float n_pos[3][3] = {{1.23,0.0,0.0},{0.0,1.23,0.0},{0.0,0.0,1.23}};
   const float black[3] = {0.0, 0.0, 0.0};
   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,black);
@@ -311,10 +312,10 @@ void DrawSys::Resize(int w,int h) const {
   glLoadIdentity();
 
   //光源と視点が一緒に動く場合
-  const GLfloat light0pos[4] = {lightpos[0].p[0],
-				lightpos[0].p[1],
-				lightpos[0].p[2],
-				lightpos[0].p[3]};
+  const GLfloat light0pos[4] = {lightpos[0][0],
+				lightpos[0][1],
+				lightpos[0][2],
+				lightpos[0][3]};
 
   glLightfv(GL_LIGHT0, GL_POSITION, light0pos); 
   //
@@ -333,10 +334,10 @@ void DrawSys::Resize(int w,int h) const {
 void DrawSys::Display(){
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //カラーバッファ,デプスバッファ指定
   /*光源と視点が一緒に動かず固定されている場合
-  const GLfloat light0pos[4] = {lightpos[0].p[0],
-				lightpos[0].p[1],
-				lightpos[0].p[2],
-				lightpos[0].p[3]};
+  const GLfloat light0pos[4] = {lightpos[0][0],
+				lightpos[0][1],
+				lightpos[0][2],
+				lightpos[0][3]};
   glLightfv(GL_LIGHT0, GL_POSITION, light0pos);*/
     
   if(swt_but){
@@ -552,10 +553,10 @@ void DrawSys::RenderString3D(const char *str,const float r[3]){
 
 void DrawSys::RenderSphere(const particle& prtcl){
   const int prop = prtcl.prop;
-  GLfloat color[3] = {p_color[prop].p[0], p_color[prop].p[1], p_color[prop].p[2]};
-  if(!prtcl.chem && (prop == 2)){
-    color[0] = p_color[3].p[0]; color[1] = p_color[3].p[1]; color[2] = p_color[3].p[2]; 
-  }
+  GLfloat color[3] = {p_color[prop][0], p_color[prop][1], p_color[prop][2]};
+  if(!prtcl.chem && (prop == 2))
+    color[0] = p_color[3][0]; color[1] = p_color[3][1]; color[2] = p_color[3][2]; 
+
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glPushMatrix();
   glTranslated(prtcl.r[0], prtcl.r[1], prtcl.r[2]);

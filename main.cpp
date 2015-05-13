@@ -14,7 +14,7 @@ namespace {
     CORRECT_OPTTAG_NUM = 6,
   };
   
-  void pring_usege_info(){
+  void print_usege_info(){
     std::cerr << "usage:					" << std::endl;
     std::cerr << "-h (Print usage info)				" << std::endl;
     std::cerr << "-i (Input directory) directory name		" << std::endl;
@@ -62,15 +62,14 @@ namespace {
       if(!flag_t_correct) dump_err_unknown_opt("-t", tag_opts["-t"]);      
       if(!flag_o_correct) dump_err_unknown_opt("-o", tag_opts["-o"]);
     }else{
-      pring_usege_info();      
+      print_usege_info();      
     }
   }
-  
 }
 
 int main(int argc, char* argv[]){
   const auto argvs = get_argvs(argc, argv);
-  if(!input_is_correct(argvs) ) pring_usege_info();
+  if(!input_is_correct(argvs) ) print_usege_info();
   std::map<std::string, std::string> tag_opts;
   get_options(tag_opts, argvs);
 

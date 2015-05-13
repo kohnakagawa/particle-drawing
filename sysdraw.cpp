@@ -485,19 +485,15 @@ void SlideDraw::Display(){
     
   for(int i=0; i<pN; i++)
     if( IsDrawnObject(Particle[i]) ) RenderSphere(Particle[i]);
+  
   ChangeCrossSection();
-
   //DrawCubic();
-
   //Drawxyz();
 
   const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
   DrawAxis(0.02, 0.3, col);
-
   RenderCurTime();
-
   //Dump2Jpg();
-  
   glutSwapBuffers();
 }
 
@@ -660,19 +656,15 @@ void AnimeDraw::Display(){
   
   for(int i=0; i<pN; i++)
     if( IsDrawnObject(Particle[i]) ) RenderSphere(Particle[i]);
+  
   ChangeCrossSection();
-
   //DrawCubic();
-
   //Drawxyz();
 
   const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
   DrawAxis(0.02, 0.3, col);
-
   RenderCurTime();
-
   Dump2Jpg();
-  
   glutSwapBuffers();
 }
 

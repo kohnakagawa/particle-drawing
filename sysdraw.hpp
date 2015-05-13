@@ -4,6 +4,7 @@
 #include <fstream>
 #include <array>
 #include <GL/freeglut.h>
+#include <memory>
 
 class Jpegout;
 
@@ -11,61 +12,54 @@ class DrawSys{
   enum{
     SEED_N = 4,
   };
-
+  
   template<int val, int n>
-  struct power{
-    static const int ret = val * power<val, n - 1>::ret;
-  };
+  struct power{ static const int ret = val * power<val, n - 1>::ret; };
   
   template<int val>
-  struct power<val, 0>{
-    static const int ret = val;
-  };
-  
-  std::vector<std::array<GLfloat, 3> > p_color;
-  std::vector<std::array<GLfloat, 4> > lightpos; 
-  std::bitset<15>  draw_crit;
-  std::vector<int> draw_crit_mask;
-  
-  int draw_crit_max, draw_crit_base;
-  bool chem_is_drawn;
-  
-  int cubeedge[12][2];
-  GLdouble vertex[8][3];
-  
-  GLfloat nv[3], cut_plane = 0.5;
+  struct power<val, 0>{ static const int ret = val; };
 
-  float *p_fovy, *p_perscenter, *p_center2eye, *p_base_z;
-
-  std::string cur_dir;
-  bool crit_out;
-  
-  int cur_time, time_step, all_time;
-  bool swt_but, cut_but, cut_adv;
-
-  //particle system
   struct particle{
-    float r[3]; //position
-    int prop;    //property
+    float r[3];
+    int prop;
     bool chem;
   };
+  
+  std::vector<std::array<GLfloat, 3> > p_color; 
+  std::vector<std::array<GLfloat, 4> > lightpos;
+  
+  std::bitset<15>  draw_crit;
+  std::vector<int> draw_crit_mask;
+  int draw_crit_max, draw_crit_base;
+  
+  int cubeedge[12][2];
+  GLfloat vertex[8][3], nv[3], cut_plane = 0.5;
+  
+  std::string cur_dir;
+  
   float scL, invL, prad, invhL, box_size[3], inv_box_size[3];
-  std::vector<particle> Particle;
-  int pN;
-
+  float *p_fovy, *p_perscenter, *p_center2eye, *p_base_z;
+  
   void *font = GLUT_BITMAP_TIMES_ROMAN_24;
   
+  void RenderString2D(const char *,float,float);
+protected:
+  int cur_time, time_step, all_time;
+  bool swt_but, cut_but, cut_adv, crit_out, chem_is_drawn;
+  int pN;
+  std::vector<particle> Particle;
   std::ifstream fin;
   
-  Jpegout *jpgout;
+  //Jpegout *jpgout;
+  std::unique_ptr<Jpegout> jpgout;
   
   void Drawxyz();
   void DrawCubic();
   void DrawAxis(float   , float, const float[][3]);
   void DrawSubAxis(float, float, const float[3]);
-
+  
   void RenderCurTime();
-  void RenderString2D(const char *,float,float);
+
   void RenderString3D(const char *,const float[3]);
 
   void RenderSphere(const particle& prtcl);
@@ -74,40 +68,67 @@ class DrawSys{
   void ChangeNormalVector(int i);
   void ChangeCrossSection();
   
+  void Dump2Jpg();
+  void ChangeLookDirection(const int i);
+  
 public:
   DrawSys(const std::string& cur_dir_, const bool crit_out_);
-  ~DrawSys();
+  virtual ~DrawSys();
   void SetParams();
-  void AllocateResource();
-
+  
   void SetCallBackFunc() const;
   void SetColor(const GLfloat*);
   void SetLightPos(const GLfloat*);
   void GetMouseInfo(float*, float*, float*, float*);
 
   void InitCube();
-  void InitWindow(int argc, char* argv[]) const;
+  void InitWindow(int argc, char* argv[], const char* win_name) const;
   void InitColor() const;
   bool InitGlew() const;
   
   void FileOpen();
   
-  void Timer(int value);
   void LoadParticleDat();
-  void Display();
-  void Resize(int,int) const;
-  void KeyBoard(unsigned char, int ,int);
-  void ChgDrawObject();
-
   
-  void PrintDrawInfo() const;
-
+  virtual void Timer(int) = 0;
+  virtual void Display() = 0;
+  virtual void KeyBoard(unsigned char, int ,int) = 0;
+  virtual void PrintDrawInfo() = 0;
+  
+  void Resize(int,int) const;
+  void ChgDrawObject();
+  
   void Execute(){
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
     glutMainLoop();
   }
-
+  
   int Pow_n(int, int) const;
+};
+
+class SlideDraw : public DrawSys{
+  enum{
+    SKIP_FRAME_NUM = 4,
+  };
+public:
+  SlideDraw(const std::string& cur_dir_, const bool crit_out_) : DrawSys(cur_dir_, crit_out_){}
+  ~SlideDraw(){}
+  void Timer(int);
+  void Display();
+  void KeyBoard(unsigned char, int, int);
+  void PrintDrawInfo();
+  
+  void SkipFileLines(std::ifstream& fin, const size_t frame_num, const int sign);
+};
+
+class AnimeDraw : public DrawSys{
+public:
+  AnimeDraw(const std::string& cur_dir_, const bool crit_out_) : DrawSys(cur_dir_, crit_out_){}
+  ~AnimeDraw(){}
+  void Timer(int);
+  void Display();
+  void KeyBoard(unsigned char, int, int);
+  void PrintDrawInfo();
 };
 
 namespace callbacks{

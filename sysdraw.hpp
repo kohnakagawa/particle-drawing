@@ -31,6 +31,8 @@ class DrawSys{
   std::bitset<15>  draw_crit;
   std::vector<int> draw_crit_mask;
   int draw_crit_max, draw_crit_base;
+
+  const int beg_time;
   
   int cubeedge[12][2];
   GLfloat vertex[8][3], nv[3], cut_plane = 0.5;
@@ -50,8 +52,9 @@ protected:
   std::vector<particle> Particle;
   std::ifstream fin;
   
-  //Jpegout *jpgout;
   std::unique_ptr<Jpegout> jpgout;
+
+  void SkipFileLines(std::ifstream& fin, const size_t frame_num, const int sign);
   
   void Drawxyz();
   void DrawCubic();
@@ -72,7 +75,7 @@ protected:
   void ChangeLookDirection(const int i);
   
 public:
-  DrawSys(const std::string& cur_dir_, const bool crit_out_);
+  DrawSys(const std::string& cur_dir_, const bool crit_out_, const int b_time);
   virtual ~DrawSys();
   void SetParams();
   
@@ -111,19 +114,17 @@ class SlideDraw : public DrawSys{
     SKIP_FRAME_NUM = 4,
   };
 public:
-  SlideDraw(const std::string& cur_dir_, const bool crit_out_) : DrawSys(cur_dir_, crit_out_){}
+  SlideDraw(const std::string& cur_dir_, const bool crit_out_, const int b_time) : DrawSys(cur_dir_, crit_out_, b_time){}
   ~SlideDraw(){}
   void Timer(int);
   void Display();
   void KeyBoard(unsigned char, int, int);
   void PrintDrawInfo();
-  
-  void SkipFileLines(std::ifstream& fin, const size_t frame_num, const int sign);
 };
 
 class AnimeDraw : public DrawSys{
 public:
-  AnimeDraw(const std::string& cur_dir_, const bool crit_out_) : DrawSys(cur_dir_, crit_out_){}
+  AnimeDraw(const std::string& cur_dir_, const bool crit_out_, const int b_time) : DrawSys(cur_dir_, crit_out_, b_time){}
   ~AnimeDraw(){}
   void Timer(int);
   void Display();
@@ -132,7 +133,7 @@ public:
 };
 
 namespace callbacks{
-  extern DrawSys* drawsys;
+  extern std::unique_ptr<DrawSys> drawsys;
   extern void wrap_display();
   extern void wrap_timer(int value);
   extern void wrap_resize(int w, int h);

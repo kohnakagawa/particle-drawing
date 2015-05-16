@@ -20,7 +20,9 @@ void callbacks::wrap_keyboard(unsigned char key, int x, int y){
   callbacks::drawsys->KeyBoard(key, x, y);
 }
 
-DrawSys::DrawSys(const std::string& cur_dir_, const bool crit_out_) : jpgout( new Jpegout() )
+DrawSys::DrawSys(const std::string& cur_dir_, 
+		 const bool crit_out_, 
+		 const int b_time) : beg_time(b_time), jpgout( new Jpegout() )
 {
   draw_crit_max  = power<2, SEED_N>::ret;
   draw_crit_base = draw_crit_max - 1;
@@ -48,6 +50,13 @@ DrawSys::~DrawSys(){}
 void DrawSys::SetParams(){
   const std::string f_name = cur_dir + "/macro_data.txt";
   std::ifstream fin(f_name.c_str());
+
+  if(!fin){
+    std::cerr << "File I/O error! \n";
+    std::cerr << f_name.c_str() << " No such file \n";
+    std::cerr << __FILE__ << " " << __LINE__ << std::endl;
+    std::exit(1);
+  }
 
   int wN = 0, lN = 0;
   fin >> wN >> lN >> scL >> prad >> all_time >> time_step;
@@ -192,12 +201,20 @@ void DrawSys::InitColor() const {
 void DrawSys::FileOpen(){
   const std::string str = cur_dir + "/particle_data.txt";
   fin.open(str.c_str());
+
   if(!fin){
     std::cerr << "File I/O error!" << std::endl;
-    std::cerr << str.c_str() << " No such file or directory." << std::endl;
+    std::cerr << str.c_str() << " No such file" << std::endl;
     std::cerr << __FILE__ << " " << __LINE__ << std::endl;
     std::exit(1);
   }
+  
+  if(beg_time >= all_time){
+    std::cerr << "beg_time is larger than all_time. \n";
+    std::exit(1);
+  }
+  
+  SkipFileLines(fin, beg_time / time_step, 1);
 }
 
 void DrawSys::LoadParticleDat(){
@@ -290,7 +307,7 @@ void DrawSys::DrawAxis(float d, float s,const float col[][3]){
 
 void DrawSys::DrawSubAxis(float d, float s, const float col[3]){
   glBegin(GL_QUAD_STRIP);
-  glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,col);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
   for(float i=0; i<=6.0; i+=1.0){
     const float t = i * 2.0 * M_PI / 6.0;
     glNormal3f(std::cos(t)    , 0.0, std::sin(t)    );
@@ -597,23 +614,23 @@ void SlideDraw::KeyBoard(unsigned char key, int x, int y){
 }
 
 void SlideDraw::PrintDrawInfo(){
-  std::cout << "n frameを1進める。"       << std::endl;
-  std::cout << "N frameを4進める。"       << std::endl;
-  std::cout << "p frameを1戻す。　"       << std::endl;
-  std::cout << "P frameを4戻す。　"       << std::endl;
-  std::cout << "x start cutting(x axis)" << std::endl;
-  std::cout << "y start cutting(y axis)" << std::endl;
-  std::cout << "z start cutting(z axis)" << std::endl;
-  std::cout << "B restart cutting"       << std::endl;
-  std::cout << "S stop cutting"          << std::endl;
-  std::cout << "q quit cutting mode"     << std::endl;
-  std::cout << "X look along x axis"     << std::endl;
-  std::cout << "Y look along y axis"     << std::endl;
-  std::cout << "Z look along z axis"     << std::endl;
-  std::cout << "h change visible object."<< std::endl;
+  std::cout << "n frameを1進める。		" << std::endl;
+  std::cout << "N frameを4進める。		" << std::endl;
+  std::cout << "p frameを1戻す。　		" << std::endl;
+  std::cout << "P frameを4戻す。　		" << std::endl;
+  std::cout << "x start cutting(x axis)		" << std::endl;
+  std::cout << "y start cutting(y axis)		" << std::endl;
+  std::cout << "z start cutting(z axis)		" << std::endl;
+  std::cout << "B restart cutting		" << std::endl;
+  std::cout << "S stop cutting			" << std::endl;
+  std::cout << "q quit cutting mode		" << std::endl;
+  std::cout << "X look along x axis		" << std::endl;
+  std::cout << "Y look along y axis		" << std::endl;
+  std::cout << "Z look along z axis		" << std::endl;
+  std::cout << "h change visible object.	" << std::endl;
 }
 
-void SlideDraw::SkipFileLines(std::ifstream& fin, const size_t frame_num, const int sign){
+void DrawSys::SkipFileLines(std::ifstream& fin, const size_t frame_num, const int sign){
   size_t line = 0;
   if(sign > 0){
     cur_time += frame_num * time_step;
@@ -632,10 +649,7 @@ void AnimeDraw::Timer(int value){
     if(!crit_out){
       swt_but = false;
     }else{
-      std::cout << "delete objects" << std::endl;
-      delete callbacks::mousehandle;
-      delete this;
-      exit(0);
+      std::exit(0);
     }
   }
   glutPostRedisplay();

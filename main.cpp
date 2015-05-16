@@ -6,12 +6,12 @@
 #include <sstream>
 #include <map>
 
-DrawSys*     callbacks::drawsys     = nullptr;
-MouseHandle* callbacks::mousehandle = nullptr;
+std::unique_ptr<DrawSys> callbacks::drawsys(nullptr);
+std::unique_ptr<MouseHandle> callbacks::mousehandle(nullptr);
 
 namespace {
   enum{
-    CORRECT_OPTTAG_NUM = 6,
+    CORRECT_OPTTAG_NUM = 8,
   };
   
   void print_usege_info(){
@@ -20,6 +20,7 @@ namespace {
     std::cerr << "-i (Input directory) directory name		" << std::endl;
     std::cerr << "-t (Draw type) slide or anime		        " << std::endl;
     std::cerr << "-o (Output jpeg files) 1(true) or 0(false)	" << std::endl;
+    std::cerr << "-b (Begin time)				" << std::endl;
     exit(1);
   }
   
@@ -31,7 +32,7 @@ namespace {
   }
   
   bool input_is_correct(const std::vector<std::string>& argvs){
-    for(auto it = argvs.begin(); it != argvs.end(); ++it) 
+    for(auto it = argvs.cbegin(); it != argvs.cend(); ++it) 
       if(*it == "-h") return false;
     
     if(argvs.size() != CORRECT_OPTTAG_NUM) return false;
@@ -42,9 +43,10 @@ namespace {
 			    const std::string& tag)
   {
     std::cerr << "unkown option " << opt << std::endl;;
-    if(tag == "-i") std::cerr << "-i directory name" << std::endl;
-    if(tag == "-t") std::cerr << "-t drawing type (slide/anime)" << std::endl;
-    if(tag == "-o") std::cerr << "-o jpeg output (1/0)" << std::endl;
+    if(tag == "-i") std::cerr << "-i directory name		" << std::endl;
+    if(tag == "-t") std::cerr << "-t drawing type (slide/anime)	" << std::endl;
+    if(tag == "-o") std::cerr << "-o jpeg output (1/0)		" << std::endl;
+    if(tag == "-b") std::cerr << "-b begin time			" << std::endl;
     exit(1);
   }
   
@@ -54,13 +56,15 @@ namespace {
     for(size_t i=0; i<argvs.size(); i += 2) 
       tag_opts[ argvs[i] ] = argvs[i + 1];
     
-    const auto end_it = tag_opts.end();
-    const bool tag_is_correct = (tag_opts.find("-i") != end_it) && (tag_opts.find("-t") != end_it) && (tag_opts.find("-o") != end_it);
+    const auto end_it = tag_opts.cend();
+    const bool tag_is_correct = (tag_opts.find("-i") != end_it) && (tag_opts.find("-t") != end_it) && (tag_opts.find("-o") != end_it) && (tag_opts.find("-b") != end_it);
     if(tag_is_correct){
       const bool flag_t_correct = (tag_opts["-t"] == "slide" ) || (tag_opts["-t"] == "anime");
       const bool flag_o_correct = (tag_opts["-o"] == "0"     ) || (tag_opts["-o"] == "1"    );
+      const bool flag_b_correct = ( atoi(tag_opts["-b"].c_str() ) >= 0);
       if(!flag_t_correct) dump_err_unknown_opt("-t", tag_opts["-t"]);      
       if(!flag_o_correct) dump_err_unknown_opt("-o", tag_opts["-o"]);
+      if(!flag_b_correct) dump_err_unknown_opt("-b", tag_opts["-b"]);
     }else{
       print_usege_info();      
     }
@@ -75,18 +79,19 @@ int main(int argc, char* argv[]){
 
   const std::string cur_dir = tag_opts["-i"];
   const bool crit_out = static_cast<bool>( atoi(tag_opts["-o"].c_str() ) );
+  const int beg_time  = atoi(tag_opts["-b"].c_str() );
 
   if(tag_opts["-t"] == "anime"){
-    callbacks::drawsys = new AnimeDraw (cur_dir, crit_out);
+    callbacks::drawsys.reset(new AnimeDraw (cur_dir, crit_out, beg_time));
   }else if(tag_opts["-t"] == "slide") {
-    callbacks::drawsys = new SlideDraw (cur_dir, crit_out);
+    callbacks::drawsys.reset(new SlideDraw (cur_dir, crit_out, beg_time));
   }else{
     exit(1);
   }
 
   callbacks::drawsys->SetParams();
   
-  callbacks::mousehandle = new MouseHandle (0.0, 0.0, 0.0, 6.0, 17.0);
+  callbacks::mousehandle.reset(new MouseHandle (0.0, 0.0, 0.0, 6.0, 17.0));
   callbacks::drawsys->GetMouseInfo(callbacks::mousehandle->RetFovy(), 
 				   callbacks::mousehandle->RetPersCent(), 
 				   callbacks::mousehandle->RetCenter2eye(),
@@ -115,8 +120,4 @@ int main(int argc, char* argv[]){
 
   callbacks::drawsys->PrintDrawInfo();
   callbacks::drawsys->Execute();
-
-  std::cout << "delete objects" << std::endl;
-  delete callbacks::drawsys;
-  delete callbacks::mousehandle;
 }

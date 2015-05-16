@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <cmath>
 
 class MouseHandle{
@@ -72,7 +73,7 @@ public:
 };
 
 namespace callbacks{
-  extern MouseHandle* mousehandle;
+  extern std::unique_ptr<MouseHandle> mousehandle;
   extern void wrap_mclick(int but, int state, int x, int y);
   extern void wrap_mmotion(int x, int y);
   extern void wrap_mwheel(int wheel_n, int direct, int x, int y);

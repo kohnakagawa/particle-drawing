@@ -6,7 +6,7 @@
 #include <sstream>
 #include <map>
 
-std::unique_ptr<DrawSys> callbacks::drawsys(nullptr);
+std::unique_ptr<DrawSys    > callbacks::drawsys(nullptr);
 std::unique_ptr<MouseHandle> callbacks::mousehandle(nullptr);
 
 namespace {
@@ -21,7 +21,7 @@ namespace {
     std::cerr << "-t (Draw type) slide or anime		        " << std::endl;
     std::cerr << "-o (Output jpeg files) 1(true) or 0(false)	" << std::endl;
     std::cerr << "-b (Begin time)				" << std::endl;
-    exit(1);
+    std::exit(1);
   }
   
   std::vector<std::string> 
@@ -77,16 +77,16 @@ int main(int argc, char* argv[]){
   std::map<std::string, std::string> tag_opts;
   get_options(tag_opts, argvs);
 
-  const std::string cur_dir = tag_opts["-i"];
-  const bool crit_out = static_cast<bool>( atoi(tag_opts["-o"].c_str() ) );
-  const int beg_time  = atoi(tag_opts["-b"].c_str() );
+  const auto cur_dir  = tag_opts["-i"];
+  const auto crit_out = static_cast<bool>( atoi(tag_opts["-o"].c_str() ) );
+  const auto beg_time = std::atoi(tag_opts["-b"].c_str() );
 
   if(tag_opts["-t"] == "anime"){
-    callbacks::drawsys.reset(new AnimeDraw (cur_dir, crit_out, beg_time));
+    callbacks::drawsys.reset(new AnimeDraw (cur_dir, crit_out, beg_time) );
   }else if(tag_opts["-t"] == "slide") {
-    callbacks::drawsys.reset(new SlideDraw (cur_dir, crit_out, beg_time));
+    callbacks::drawsys.reset(new SlideDraw (cur_dir, crit_out, beg_time) );
   }else{
-    exit(1);
+    std::exit(1);
   }
 
   callbacks::drawsys->SetParams();

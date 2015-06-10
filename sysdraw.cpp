@@ -118,77 +118,35 @@ void DrawSys::InitWindow(int argc, char* argv[], const char* win_name) const {
 }
 
 void DrawSys::InitCube(){
-  vertex[0][0] = -0.5;
-  vertex[0][1] = -0.5;
-  vertex[0][2] = -0.5;
+  //down square
+  vertex[0][0] = -0.5; vertex[0][1] = -0.5; vertex[0][2] = -0.5;
+  vertex[1][0] = 0.5;  vertex[1][1] = -0.5; vertex[1][2] = -0.5;
+  vertex[2][0] = 0.5;  vertex[2][1] = 0.5;  vertex[2][2] = -0.5;
+  vertex[3][0] = -0.5; vertex[3][1] = 0.5;  vertex[3][2] = -0.5;
+
+  //up square
+  vertex[4][0] = -0.5; vertex[4][1] = -0.5; vertex[4][2] = 0.5;
+  vertex[5][0] = 0.5;  vertex[5][1] = -0.5; vertex[5][2] = 0.5;
+  vertex[6][0] = 0.5;  vertex[6][1] = 0.5;  vertex[6][2] = 0.5;
+  vertex[7][0] = -0.5; vertex[7][1] = 0.5;  vertex[7][2] = 0.5;
   
-  vertex[1][0] = 0.5;
-  vertex[1][1] = -0.5;
-  vertex[1][2] = -0.5;
-
-  vertex[2][0] = 0.5;
-  vertex[2][1] = 0.5;
-  vertex[2][2] = -0.5;
-
-  vertex[3][0] = -0.5;
-  vertex[3][1] = 0.5;
-  vertex[3][2] = -0.5;
-
-  vertex[4][0] = -0.5;
-  vertex[4][1] = -0.5;
-  vertex[4][2] = 0.5;
-
-  vertex[5][0] = 0.5;
-  vertex[5][1] = -0.5;
-  vertex[5][2] = 0.5;
-
-  vertex[6][0] = 0.5;
-  vertex[6][1] = 0.5;
-  vertex[6][2] = 0.5;
-
-  vertex[7][0] = -0.5;
-  vertex[7][1] = 0.5;
-  vertex[7][2] = 0.5;
-
-  cubeedge[0][0] = 0;
-  cubeedge[0][1] = 1;
-  
-  cubeedge[1][0] = 1;
-  cubeedge[1][1] = 2;
-
-  cubeedge[2][0] = 2;
-  cubeedge[2][1] = 3;
-
-  cubeedge[3][0] = 3;
-  cubeedge[3][1] = 0;
-
-  cubeedge[4][0] = 4;
-  cubeedge[4][1] = 5;
-
-  cubeedge[5][0] = 5;
-  cubeedge[5][1] = 6;
-
-  cubeedge[6][0] = 6;
-  cubeedge[6][1] = 7;
-
-  cubeedge[7][0] = 7;
-  cubeedge[7][1] = 4;
-
-  cubeedge[8][0] = 0;
-  cubeedge[8][1] = 4;
-
-  cubeedge[9][0] = 1;
-  cubeedge[9][1] = 5;
-
-  cubeedge[10][0] = 2;
-  cubeedge[10][1] = 6;
-
-  cubeedge[11][0] = 3;
-  cubeedge[11][1] = 7;
+  //edge connection
+  cubeedge[0][0] = 0; cubeedge[0][1] = 1;
+  cubeedge[1][0] = 1; cubeedge[1][1] = 2;
+  cubeedge[2][0] = 2; cubeedge[2][1] = 3;
+  cubeedge[3][0] = 3; cubeedge[3][1] = 0;
+  cubeedge[4][0] = 4; cubeedge[4][1] = 5;
+  cubeedge[5][0] = 5; cubeedge[5][1] = 6;
+  cubeedge[6][0] = 6; cubeedge[6][1] = 7;
+  cubeedge[7][0] = 7; cubeedge[7][1] = 4;
+  cubeedge[8][0] = 0; cubeedge[8][1] = 4;
+  cubeedge[9][0] = 1; cubeedge[9][1] = 5;
+  cubeedge[10][0] = 2; cubeedge[10][1] = 6;
+  cubeedge[11][0] = 3; cubeedge[11][1] = 7;
 }
 
 void DrawSys::InitColor() const {
-  glClearColor(1.0,1.0,1.0,1.0); //(Red,Green,Blue,A) Aは透明度 ウィンドウを塗りつぶす色を指定
+  glClearColor(1.0, 1.0, 1.0, 1.0); //(Red,Green,Blue,A) Aは透明度 ウィンドウを塗りつぶす色を指定
   glEnable(GL_DEPTH_TEST); //デプスバッファ使用
 
   glEnable(GL_CULL_FACE);
@@ -218,12 +176,14 @@ void DrawSys::FileOpen(){
 }
 
 void DrawSys::LoadParticleDat(){
-  float buf_d[3] = {0.0}; int buf_i = 0, buf_j = 0;
+  float buf_d[3] = {0.0}; int buf_i[4] = {0};
   
   for(int i=0; i<pN; i++){
     fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
 	>> buf_d[0]         >> buf_d[1]         >> buf_d[2]
-	>> Particle[i].prop >> Particle[i].chem >> buf_i >> buf_j;
+	>> Particle[i].prop >> buf_i[0]
+	>> Particle[i].chem >> buf_i[1] >> buf_i[2]
+	>> buf_i[3];
 
     if(box_size[0] < Particle[i].r[0]) box_size[0] = Particle[i].r[0];
     if(box_size[1] < Particle[i].r[1]) box_size[1] = Particle[i].r[1];
@@ -451,7 +411,7 @@ void DrawSys::ChangeNormalVector(int i){
     nv[2] = 1.0;
     break;
   case 3:
-    nv[0] = nv[1] = nv[2] = 1.0 / sqrt(3.0);
+    nv[0] = nv[1] = nv[2] = 1.0 / std::sqrt(3.0);
     break;
   default:
     break;
@@ -562,6 +522,9 @@ void SlideDraw::KeyBoard(unsigned char key, int x, int y){
       break;
     case 'Q':
       cut_but = false;
+      break;
+    case 'S':
+      cut_adv = false;
       break;
     case 'x':
       cut_adv  = cut_but = true;

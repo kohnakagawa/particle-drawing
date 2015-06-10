@@ -34,8 +34,9 @@ class DrawSys{
 
   const int beg_time;
   
-  int cubeedge[12][2];
-  GLfloat vertex[8][3], nv[3], cut_plane = 0.5;
+  std::array<std::array<int, 2>, 12>  cubeedge;
+  std::array<GLfloat, 3> nv;
+  GLfloat cut_plane = 0.5, vertex[8][3];
   
   std::string cur_dir;
   
@@ -44,7 +45,7 @@ class DrawSys{
   
   void *font = GLUT_BITMAP_TIMES_ROMAN_24;
   
-  void RenderString2D(const char *,float,float);
+  void RenderString2D(const char*, float, float);
 protected:
   int cur_time, time_step, all_time;
   bool swt_but, cut_but, cut_adv, crit_out, chem_is_drawn;

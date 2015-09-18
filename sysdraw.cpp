@@ -177,6 +177,7 @@ void DrawSys::FileOpen(){
 
 void DrawSys::LoadParticleDat(){
   float buf_d[3] = {0.0}; int buf_i[4] = {0};
+
   
   for(int i=0; i<pN; i++){
     fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
@@ -190,9 +191,24 @@ void DrawSys::LoadParticleDat(){
     if(box_size[2] < Particle[i].r[2]) box_size[2] = Particle[i].r[2];
   }
 
+#if 0
+  //adjust image to remove PBC
+  inv_box_size[0] = 1.0 / box_size[0]; inv_box_size[1] = 1.0 / box_size[1]; inv_box_size[2] = 1.0 / box_size[2];
+  float offset[3] = {6.3, 2.4, -2.8};
+  for(int i = 0; i < pN; i++){
+    Particle[i].r[0] += offset[0];
+    Particle[i].r[1] += offset[1];
+    Particle[i].r[2] += offset[2];
+
+    Particle[i].r[0] -= floor(Particle[i].r[0] * inv_box_size[0]) * box_size[0];
+    Particle[i].r[1] -= floor(Particle[i].r[1] * inv_box_size[1]) * box_size[1];
+    Particle[i].r[2] -= floor(Particle[i].r[2] * inv_box_size[2]) * box_size[2];
+  }
+#endif
+
   box_size[0] *= invL; box_size[1] *= invL; box_size[2] *= invL;
   inv_box_size[0] = 1.0 / box_size[0]; inv_box_size[1] = 1.0 / box_size[1]; inv_box_size[2] = 1.0 / box_size[2];
-
+  
   for(int i=0; i<pN; i++){
     Particle[i].r[0] *= invL;
     Particle[i].r[1] *= invL;
@@ -324,10 +340,10 @@ int DrawSys::Pow_n(int x, int n) const {
   int a = 1;
   while(n > 0){
     if(n % 2 == 0){
-      x = x*x;
-      n = n>>1;
+      x *= x;
+      n >>= 1;
     }else{
-      a = a*x;
+      a *= x;
       n--;
     }
   }
@@ -364,6 +380,12 @@ void DrawSys::RenderSphere(const particle& prtcl){
     color[1] = p_color[3][1]; 
     color[2] = p_color[3][2];     
   }
+  
+  if(!prtcl.chem && (prop == 1)){
+    color[0] = p_color[4][0];
+    color[1] = p_color[4][1];
+    color[2] = p_color[4][2];
+  }
 
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glPushMatrix();
@@ -382,11 +404,11 @@ bool DrawSys::IsDrawnObject(const particle& prtcl){
     
     bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
 
-#if 1
+#if 0
     if(chem_is_drawn) ret &= prtcl.chem;
 #else
     if(chem_is_drawn){
-      if(prtcl.prop == 1){
+      if( (prtcl.prop == 1) || (prtcl.prop == 0) ){
 	ret &= prtcl.chem;
       }else if(prtcl.prop == 2){
 	ret &= true;
@@ -419,8 +441,13 @@ void DrawSys::ChangeNormalVector(int i){
 }
 
 void DrawSys::ChangeCrossSection(){
-  if(cut_plane <= -0.5) cut_plane += 1.0;
-  if(cut_adv) cut_plane -= 0.02;
+  static float sign = 1.0f;
+  if(cut_plane >= 0.2 ){
+    sign = -1.0f;
+  }else if(cut_plane <= -0.2){
+    sign = 1.0f;
+  }
+  if(cut_adv) cut_plane += sign * 0.03;
 }
 
 void DrawSys::Dump2Jpg(){
@@ -435,11 +462,10 @@ void DrawSys::ChangeLookDirection(const int i){
   p_center2eye[0] = p_center2eye[1] = p_center2eye[2] = 0.5;
   p_center2eye[i] = 6.0;
   p_base_z[0] = p_base_z[1] = p_base_z[2] = 0.0;
-  if(i == 2){
+  if(i == 2)
     p_base_z[1] = 1.0;
-  }else{
+  else
     p_base_z[2] = 1.0;
-  }
 }
 
 bool DrawSys::InitGlew() const {

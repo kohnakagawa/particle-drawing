@@ -6,7 +6,7 @@ CFLAGS = -std=c++11 -O3 -xHOST -no-prec-div
 
 OBJECTS = sysdraw.o mousehandle.o jpegout.o main.o
 TARGET = cDraw
-LOADLIBES = -lglut -lGLU -L/usr/lib/nvidia-331-updates -lGL -ljpeg -lGLEW
+LOADLIBES = -lglut -lGLU -L/usr/lib/nvidia-340-updates -lGL -ljpeg -lGLEW
 
 .SUFFIXES:
 .SUFFIXES: .cpp .o

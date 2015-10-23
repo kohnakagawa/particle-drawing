@@ -92,6 +92,7 @@ public:
   
   void FileOpen();
   
+  particle ParseDataLine(const std::string& line) const ;
   void LoadParticleDat();
   
   virtual void Timer(int) = 0;

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <GL/glew.h>
 #include <limits>
+#include <boost/algorithm/string.hpp>
 #include "sysdraw.hpp"
 #include "jpegout.hpp"
 #include "mousehandle.hpp"
@@ -175,17 +176,30 @@ void DrawSys::FileOpen(){
   SkipFileLines(fin, beg_time / time_step, 1);
 }
 
+DrawSys::particle DrawSys::ParseDataLine(const std::string& line) const {
+  std::vector<std::string> v;
+  boost::algorithm::split(v, line, boost::algorithm::is_space());
+  if(v.size() < 9) {
+    std::cerr << "Few input data\n";
+    std::cerr << __FILE__ << " " << __LINE__ << std::endl;
+    std::exit(1);
+  }
+  const DrawSys::particle prtcl = {
+    { static_cast<float>(std::atof(v[0].c_str())),
+      static_cast<float>(std::atof(v[1].c_str())),
+      static_cast<float>(std::atof(v[2].c_str())) },
+    std::atoi(v[6].c_str()),
+    static_cast<bool>(std::atoi(v[8].c_str())),
+  };
+  return prtcl;
+}
+
 void DrawSys::LoadParticleDat(){
-  float buf_d[3] = {0.0}; int buf_i[4] = {0};
-
-  
-  for(int i=0; i<pN; i++){
-    fin >> Particle[i].r[0] >> Particle[i].r[1] >> Particle[i].r[2] 
-	>> buf_d[0]         >> buf_d[1]         >> buf_d[2]
-	>> Particle[i].prop >> buf_i[0]
-	>> Particle[i].chem >> buf_i[1] >> buf_i[2]
-	>> buf_i[3];
-
+  for(int i = 0; i < pN; i++) {
+    std::string line;
+    std::getline(fin, line);
+    Particle[i] = ParseDataLine(line);
+    
     if(box_size[0] < Particle[i].r[0]) box_size[0] = Particle[i].r[0];
     if(box_size[1] < Particle[i].r[1]) box_size[1] = Particle[i].r[1];
     if(box_size[2] < Particle[i].r[2]) box_size[2] = Particle[i].r[2];
@@ -209,7 +223,7 @@ void DrawSys::LoadParticleDat(){
   box_size[0] *= invL; box_size[1] *= invL; box_size[2] *= invL;
   inv_box_size[0] = 1.0 / box_size[0]; inv_box_size[1] = 1.0 / box_size[1]; inv_box_size[2] = 1.0 / box_size[2];
   
-  for(int i=0; i<pN; i++){
+  for(int i = 0; i < pN; i++) {
     Particle[i].r[0] *= invL;
     Particle[i].r[1] *= invL;
     Particle[i].r[2] *= invL;
@@ -395,22 +409,29 @@ void DrawSys::RenderSphere(const particle& prtcl){
 }
 
 bool DrawSys::IsDrawnObject(const particle& prtcl){
-  if(!cut_but){
+  if(!cut_but) {
+#if 1
     bool ret = draw_crit[prtcl.prop];
     if(chem_is_drawn) ret &= prtcl.chem;
+#else
+    bool ret = draw_crit[prtcl.prop];
+    if(chem_is_drawn) ret &= prtcl.chem;
+    if(prtcl.prop == 2 && prtcl.chem) ret = false;
+#endif
+    
     return ret;
-  }else{
+  } else {
     const float in_prod = nv[0] * prtcl.r[0] * inv_box_size[0] + nv[1] * prtcl.r[1] * inv_box_size[1] + nv[2] * prtcl.r[2] * inv_box_size[2];
     
     bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
 
-#if 0
+#if 1
     if(chem_is_drawn) ret &= prtcl.chem;
 #else
-    if(chem_is_drawn){
-      if( (prtcl.prop == 1) || (prtcl.prop == 0) ){
+    if(chem_is_drawn) {
+      if( (prtcl.prop == 1) || (prtcl.prop == 0) ) {
 	ret &= prtcl.chem;
-      }else if(prtcl.prop == 2){
+      } else if(prtcl.prop == 2) {
 	ret &= true;
       }
     }

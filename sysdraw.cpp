@@ -208,7 +208,7 @@ void DrawSys::LoadParticleDat(){
 #if 0
   //adjust image to remove PBC
   inv_box_size[0] = 1.0 / box_size[0]; inv_box_size[1] = 1.0 / box_size[1]; inv_box_size[2] = 1.0 / box_size[2];
-  float offset[3] = {6.3, 2.4, -2.8};
+  float offset[3] = {9.0, 5.0, 0.0};
   for(int i = 0; i < pN; i++){
     Particle[i].r[0] += offset[0];
     Particle[i].r[1] += offset[1];
@@ -390,15 +390,15 @@ void DrawSys::RenderSphere(const particle& prtcl){
   const int prop = prtcl.prop;
   GLfloat color[3] = {p_color[prop][0], p_color[prop][1], p_color[prop][2]};
   if(!prtcl.chem && (prop == 2)){
-    color[0] = p_color[3][0]; 
-    color[1] = p_color[3][1]; 
-    color[2] = p_color[3][2];     
-  }
-  
-  if(!prtcl.chem && (prop == 1)){
     color[0] = p_color[4][0];
     color[1] = p_color[4][1];
     color[2] = p_color[4][2];
+  }
+  
+  if(!prtcl.chem && (prop == 1)){
+    color[0] = p_color[5][0];
+    color[1] = p_color[5][1];
+    color[2] = p_color[5][2];
   }
 
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
@@ -410,7 +410,7 @@ void DrawSys::RenderSphere(const particle& prtcl){
 
 bool DrawSys::IsDrawnObject(const particle& prtcl){
   if(!cut_but) {
-#if 1
+#if 0
     bool ret = draw_crit[prtcl.prop];
     if(chem_is_drawn) ret &= prtcl.chem;
 #else
@@ -425,7 +425,7 @@ bool DrawSys::IsDrawnObject(const particle& prtcl){
     
     bool ret = (in_prod < cut_plane) && draw_crit[prtcl.prop];
 
-#if 1
+#if 0
     if(chem_is_drawn) ret &= prtcl.chem;
 #else
     if(chem_is_drawn) {
@@ -686,7 +686,7 @@ void AnimeDraw::Display(){
   //Drawxyz();
 
   const float col[3][3] = {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
-  DrawAxis(0.02, 0.3, col);
+  //DrawAxis(0.02, 0.3, col);
   RenderCurTime();
   Dump2Jpg();
   glutSwapBuffers();

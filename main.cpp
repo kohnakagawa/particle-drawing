@@ -81,13 +81,12 @@ int main(int argc, char* argv[]){
   const auto crit_out = static_cast<bool>( atoi(tag_opts["-o"].c_str() ) );
   const auto beg_time = std::atoi(tag_opts["-b"].c_str() );
 
-  if(tag_opts["-t"] == "anime"){
+  if(tag_opts["-t"] == "anime")
     callbacks::drawsys.reset(new AnimeDraw (cur_dir, crit_out, beg_time) );
-  }else if(tag_opts["-t"] == "slide") {
+  else if(tag_opts["-t"] == "slide") 
     callbacks::drawsys.reset(new SlideDraw (cur_dir, crit_out, beg_time) );
-  }else{
+  else
     std::exit(1);
-  }
 
   callbacks::drawsys->SetParams();
   
@@ -102,11 +101,13 @@ int main(int argc, char* argv[]){
   const GLfloat water_c[]	= {0.000, 0.749, 1.000};
   const GLfloat hyphil_c[]	= {1.000, 0.188, 0.188};
   const GLfloat hyphob_c[]	= {1.000, 1.000, 0.000};
+  const GLfloat catal_c[]       = {0.545, 0.000, 0.545};
   const GLfloat reacted_c[]	= {0.000, 0.500, 0.000};
   const GLfloat reacted_h[]     = {1.000, 0.500, 0.000};
   callbacks::drawsys->SetColor(water_c);
   callbacks::drawsys->SetColor(hyphil_c);
   callbacks::drawsys->SetColor(hyphob_c);
+  callbacks::drawsys->SetColor(catal_c);
   callbacks::drawsys->SetColor(reacted_c);
   callbacks::drawsys->SetColor(reacted_h);
   

@@ -1,0 +1,13 @@
+* particle-drawing
+My visualization tools for particle simulations (such as Molecular Dynamics simulations).
+
+* Requirements
+- C++11 compiler
+- freeglut
+- libjpeg
+- GLEW
+
+* How to compile
+#+BEGIN_SRC bash
+$ make
+#+END_SRC

@@ -1,12 +1,10 @@
-# CXX = icpc
 CXX = g++
 
-CFLAGS = -g -O3 -Wall -std=c++11 -ffast-math -funroll-loops -pthread
-# CFLAGS = -std=c++11 -O3 -xHOST -no-prec-div
+CFLAGS = -g -O3 -Wall -Wextra -std=c++11 -ffast-math -funroll-loops -pthread
 
 OBJECTS = sysdraw.o mousehandle.o jpegout.o main.o
 TARGET = cDraw
-LOADLIBES = -lpthread -lglut -lGLU -lGL -ljpeg -lGLEW
+LOADLIBES = -lpthread -lglut -lGLU -lGL -ljpeg -lGLEW -L/usr/lib/i386-linux-gnu -lboost_filesystem -lboost_system
 
 .SUFFIXES:
 .SUFFIXES: .cpp .o

@@ -1,13 +1,13 @@
 /*
-How to use
+  How to use
 
-Please insert the following sentences before calling glutSwapBuffers()
+  Please insert the following sentences before calling glutSwapBuffers()
 
-GetWindowInfo();
-SnapijgImage();
-SaveImgJpeg(current_time,all_time_steps,current_dir);
+  GetWindowInfo();
+  SnapijgImage();
+  SaveImgJpeg(current_time,all_time_steps,current_dir);
 
-The picture whose size is larger than 2048 pixel is declined.
+  The picture whose size is larger than 2048 pixel is declined.
 */
 
 #include "jpegout.hpp"
@@ -16,7 +16,10 @@ The picture whose size is larger than 2048 pixel is declined.
 #include <sstream>
 #include <GL/freeglut.h>
 
-void Jpegout::InitJpegOjbects(jpeg_compress_struct& cinfo, jpeg_error_mgr& jerr) const {
+#include "helper_macros.hpp"
+
+void Jpegout::InitJpegOjbects(jpeg_compress_struct& cinfo,
+                              jpeg_error_mgr& jerr) const {
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
 }
@@ -30,16 +33,20 @@ void Jpegout::SetImageQuality(jpeg_compress_struct& cinfo) const {
   jpeg_set_quality(&cinfo, IMG_QUALITY, TRUE);
 }
 
-FILE* Jpegout::RetOutputFilePtr(const int jpeg_time, const std::string& cur_dir, jpeg_compress_struct& cinfo) const {
+FILE* Jpegout::RetOutputFilePtr(const int jpeg_time,
+                                const std::string& cur_dir) const {
   std::stringstream ss;
-  ss << cur_dir << "/time" << std::setw(numb_digit) << std::setfill('0') << jpeg_time << ".jpeg";
+  ss << cur_dir << "/time"
+     << std::setw(numb_digit) << std::setfill('0')
+     << jpeg_time << ".jpeg";
   return fopen(ss.str().c_str(), "wb");
 }
 
-void Jpegout::WriteImage2File(jpeg_compress_struct& cinfo){
+void Jpegout::WriteImage2File(jpeg_compress_struct& cinfo) {
   jpeg_start_compress(&cinfo, TRUE);
-  for(int i=0; i< b_hei; i++) 
+  for (int i = 0; i < b_hei; i++) {
     img[i] = ptr_buffer + (b_hei - i) * RGB_ELEM * b_wid;
+  }
   jpeg_write_scanlines(&cinfo, &*img.begin(), b_hei);
   jpeg_finish_compress(&cinfo);
 }
@@ -49,11 +56,10 @@ void Jpegout::CleanUp(jpeg_compress_struct& cinfo, FILE* outfile) const {
   fclose(outfile);
 }
 
-void Jpegout::GetWindowInfo()
-{
+void Jpegout::GetWindowInfo() {
   const int wid = glutGet(GLUT_WINDOW_WIDTH);
-  const int hei = glutGet(GLUT_WINDOW_HEIGHT);  
-  if(wid == b_wid && hei == b_hei) return;
+  const int hei = glutGet(GLUT_WINDOW_HEIGHT);
+  if (wid == b_wid && hei == b_hei) return;
 
   b_wid = wid;
   b_hei = hei;
@@ -62,26 +68,33 @@ void Jpegout::GetWindowInfo()
   img.resize(hei);
 }
 
-void Jpegout::SnapijgImage()
-{
+void Jpegout::SnapijgImage() {
   //http://www.khronos.org/opengles/sdk/1.1/docs/man/glPixelStorei.xml
-  glReadBuffer(GL_FRONT); 
-  ptr_buffer = reinterpret_cast<JSAMPLE*>(&*ijg_buffer.begin());
+  glReadBuffer(GL_FRONT);
+  ptr_buffer = reinterpret_cast<JSAMPLE*>(ijg_buffer.data());
   glReadPixels(0, 0, b_wid, b_hei, GL_RGB, GL_UNSIGNED_BYTE, ptr_buffer);
 }
 
-void Jpegout::SaveImgJpeg(const int current_time, const int all_time_steps, const std::string& current_dir, const int time_step)
-{
+void Jpegout::SaveImgJpeg(const int current_time,
+                          const int all_time_steps,
+                          const std::string& current_dir,
+                          const int time_step) {
+  PD_UNUSED_PARAM(current_time);
+  PD_UNUSED_PARAM(all_time_steps);
+  PD_UNUSED_PARAM(time_step);
+
   jpeg_compress_struct cinfo;
   jpeg_error_mgr jerr;
-  
+
   InitJpegOjbects(cinfo, jerr);
-  FILE* outfile = RetOutputFilePtr(jpeg_time, current_dir, cinfo);
+  FILE* outfile = RetOutputFilePtr(jpeg_time, current_dir);
   jpeg_stdio_dest(&cinfo, outfile);
   SetImageQuality(cinfo);
   WriteImage2File(cinfo);
   CleanUp(cinfo, outfile);
-  
+
   jpeg_time++;
-  if(jpeg_time > MAX_TIME) std::cerr << "jpeg_time exceeds predefined maximum time" << std::endl;
+  if (jpeg_time > MAX_TIME) {
+    std::cerr << "jpeg_time exceeds predefined maximum time" << std::endl;
+  }
 }

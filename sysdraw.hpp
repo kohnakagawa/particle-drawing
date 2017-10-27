@@ -25,7 +25,7 @@ class DrawSys{
   };
 
   std::vector<std::array<GLfloat, 3>> p_color;
-  std::vector<std::array<GLfloat, 4>> lightpos;
+
 
   std::bitset<15>  draw_crit;
   std::vector<int> draw_crit_mask;
@@ -49,6 +49,8 @@ protected:
   int cur_time, time_step, all_time;
   bool swt_but, cut_but, cut_adv, crit_out, chem_is_drawn;
   int pN;
+  std::vector<std::array<GLfloat, 4>> lightpos;
+
   std::vector<particle> Particle;
   std::ifstream fin;
 

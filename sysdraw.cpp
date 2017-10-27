@@ -323,7 +323,7 @@ void DrawSys::DrawSubAxis(float d, float s, const float col[3]) {
   glutSolidCone(2.0 * d, 4.0 * d, 5, 5);
 }
 
-void DrawSys::Resize(int w,int h) const {
+void DrawSys::Resize(int w, int h) const {
   glViewport(0, 0, w, h);
 
   glMatrixMode(GL_PROJECTION); //透視変換行列設定
@@ -339,7 +339,6 @@ void DrawSys::Resize(int w,int h) const {
                                 lightpos[0][1],
                                 lightpos[0][2],
                                 lightpos[0][3]};
-
   glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
   //
 
@@ -499,12 +498,12 @@ bool DrawSys::InitGlew() const {
 
 void SlideDraw::Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //カラーバッファ,デプスバッファ指定
-  /*光源と視点が一緒に動かず固定されている場合
-    const GLfloat light0pos[4] = {lightpos[0][0],
-    lightpos[0][1],
-    lightpos[0][2],
-    lightpos[0][3]};
-    glLightfv(GL_LIGHT0, GL_POSITION, light0pos);*/
+  // 光源と視点が一緒に動かず固定されている場合
+  // const GLfloat light0pos[4] = {lightpos[0][0],
+  //                               lightpos[0][1],
+  //                               lightpos[0][2],
+  //                               lightpos[0][3]};
+  // glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
 
   for (const auto& ptcl : Particle) {
     if (IsDrawnObject(ptcl)) RenderSphere(ptcl);
@@ -674,12 +673,12 @@ void AnimeDraw::Timer(int value) {
 
 void AnimeDraw::Display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //カラーバッファ,デプスバッファ指定
-  /*光源と視点が一緒に動かず固定されている場合
-    const GLfloat light0pos[4] = {lightpos[0][0],
-    lightpos[0][1],
-    lightpos[0][2],
-    lightpos[0][3]};
-    glLightfv(GL_LIGHT0, GL_POSITION, light0pos);*/
+  // 光源と視点が一緒に動かず固定されている場合
+  // const GLfloat light0pos[4] = {lightpos[0][0],
+  //                               lightpos[0][1],
+  //                               lightpos[0][2],
+  //                               lightpos[0][3]};
+  // glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
 
   if (swt_but) LoadParticleDat();
 

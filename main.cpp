@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
   callbacks::drawsys->SetColor(reacted_c);
   callbacks::drawsys->SetColor(reacted_h);
 
-  const GLfloat light0pos[] = {10.0, 10.0, -1.0, 1.0};
+  const GLfloat light0pos[] = {0.0, 0.0, -1.0, 1.0};
   callbacks::drawsys->SetLightPos(light0pos);
 
   callbacks::drawsys->InitCube();

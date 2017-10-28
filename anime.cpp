@@ -28,7 +28,7 @@ void AnimeDraw::Display() {
 
   if (swt_but) LoadParticleDat();
 
-  for (const auto& ptcl : Particle) {
+  for (auto&& ptcl : Particle) {
     if (IsDrawnObject(ptcl)) RenderSphere(ptcl);
   }
 
@@ -48,8 +48,7 @@ void AnimeDraw::KeyBoard(unsigned char key, int x, int y) {
   PD_UNUSED_PARAM(y);
 
   const auto wid = glutGet(GLUT_WINDOW_WIDTH), hei = glutGet(GLUT_WINDOW_HEIGHT);
-  switch(key)
-    {
+  switch(key) {
     case 'b':
       swt_but = true;
       break;
@@ -117,7 +116,14 @@ void AnimeDraw::KeyBoard(unsigned char key, int x, int y) {
       break;
     case 'A':
       chem_is_drawn = true;
+      inner_is_drawn = false;
+      ChangeSphereRadiusToDefault();
       Resize(wid,hei);
+      break;
+    case 'T':
+      inner_is_drawn = true;
+      ChangeSphereRadiusOfInnerDisk();
+      Resize(wid, hei);
       break;
     default:
       break;
@@ -137,5 +143,6 @@ void AnimeDraw::PrintDrawInfo() {
   std::cout << "X look along x axis"     << std::endl;
   std::cout << "Y look along y axis"     << std::endl;
   std::cout << "Z look along z axis"     << std::endl;
+  std::cout << "T show only inner vesicle"<< std::endl;
   std::cout << "h change visible object."<< std::endl;
 }

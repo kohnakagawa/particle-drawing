@@ -12,7 +12,7 @@ void SlideDraw::Display() {
   //                               lightpos[0][3]};
   // glLightfv(GL_LIGHT0, GL_POSITION, light0pos);
 
-  for (const auto& ptcl : Particle) {
+  for (auto&& ptcl : Particle) {
     if (IsDrawnObject(ptcl)) RenderSphere(ptcl);
   }
 

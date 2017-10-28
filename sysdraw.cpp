@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <cstdlib>
 #include <sstream>
 #include <GL/glew.h>
@@ -34,6 +35,7 @@ DrawSys::DrawSys(const std::string& cur_dir_,
   draw_crit_max  = power(2, SEED_N);
   draw_crit_base = draw_crit_max - 1;
   chem_is_drawn  = true;
+  inner_is_drawn = false;
 
   nv[0] = 1.0; nv[1] = 0.0, nv[2] = 0.0;
 
@@ -55,12 +57,14 @@ DrawSys::DrawSys(const std::string& cur_dir_,
 DrawSys::~DrawSys() {}
 
 void DrawSys::SetParams() {
-  const std::string f_name = cur_dir + "/macro_data.txt";
-  std::ifstream fin(f_name.c_str());
+  boost::filesystem::path path_cur_dir(cur_dir);
+  boost::filesystem::path path_fname("macro_data.txt");
+  boost::filesystem::path path_f_full = path_cur_dir / path_fname;
+  std::ifstream fin(path_f_full.string());
 
   if (!fin) {
     std::cerr << "File I/O error! \n";
-    std::cerr << f_name.c_str() << " No such file \n";
+    std::cerr << path_f_full.string() << " No such file \n";
     std::cerr << __FILE__ << " " << __LINE__ << std::endl;
     std::exit(1);
   }
@@ -194,9 +198,12 @@ DrawSys::particle DrawSys::ParseDataLine(const std::string& line) const {
     std::exit(1);
   }
   const DrawSys::particle prtcl {
-    {std::stof(v[0]), std::stof(v[1]), std::stof(v[2])},
-    std::atoi(v[6].c_str()),
-    static_cast<bool>(std::atoi(v[8].c_str())),
+    {
+      std::stof(v[0]), std::stof(v[1]), std::stof(v[2])
+        },
+      std::atoi(v[6].c_str()),
+      static_cast<bool>(std::atoi(v[8].c_str())),
+      prad
   };
   return prtcl;
 }
@@ -206,18 +213,19 @@ void DrawSys::LoadParticleDat() {
     std::string line;
     std::getline(fin, line);
     Particle[i] = ParseDataLine(line);
+    Particle[i].rad = prad;
 
     if (box_size[0] < Particle[i].r[0]) box_size[0] = Particle[i].r[0];
     if (box_size[1] < Particle[i].r[1]) box_size[1] = Particle[i].r[1];
     if (box_size[2] < Particle[i].r[2]) box_size[2] = Particle[i].r[2];
   }
 
-#if 0
+#if 1
   //adjust image to remove PBC
   inv_box_size[0] = 1.0 / box_size[0];
   inv_box_size[1] = 1.0 / box_size[1];
   inv_box_size[2] = 1.0 / box_size[2];
-  float offset[] {9.0, 5.0, 0.0};
+  float offset[] {7.0, 2.0, -7.0};
   for (int i = 0; i < pN; i++) {
     Particle[i].r[0] += offset[0];
     Particle[i].r[1] += offset[1];
@@ -244,6 +252,10 @@ void DrawSys::LoadParticleDat() {
     Particle[i].r[0] -= box_size[0] * 0.5;
     Particle[i].r[1] -= box_size[1] * 0.5;
     Particle[i].r[2] -= box_size[2] * 0.5;
+  }
+
+  if (inner_is_drawn) {
+    ChangeSphereRadiusOfInnerDisk();
   }
 }
 
@@ -281,6 +293,7 @@ void DrawSys::DrawCubic() {
 
 void DrawSys::DrawAxis(float d, float s, const float col[][3]) {
   const float origin[] {-0.95, 0.0, 0.0};
+  // const float origin[] {0.0, 0.0, 0.6};
 
   glPushMatrix();
   glTranslatef(origin[0], origin[1], origin[2]);
@@ -403,19 +416,44 @@ void DrawSys::RenderSphere(const particle& prtcl) {
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
   glPushMatrix();
   glTranslated(prtcl.r[0], prtcl.r[1], prtcl.r[2]);
-  glutSolidSphere(prad, 10, 10);
+  glutSolidSphere(prtcl.rad, 10, 10);
   glPopMatrix();
 }
 
-bool DrawSys::IsDrawnObject(const particle& prtcl) {
+void DrawSys::ChangeSphereRadiusToDefault() {
+  std::for_each(Particle.begin(), Particle.end(), [this](particle& ptcl) {ptcl.rad = prad;});
+}
+
+void DrawSys::ChangeSphereRadiusOfInnerDisk() {
+  const auto cmpos = GetCMPos();
+  const double rad_ves = 0.3;
+  const auto rad_ves2 = rad_ves * rad_ves;
+
+  for (auto&& ptcl : Particle) {
+    const auto dx = ptcl.r[0] - cmpos[0];
+    const auto dy = ptcl.r[1] - cmpos[1];
+    const auto dz = ptcl.r[2] - cmpos[2];
+    const auto dr2 = dx*dx + dy*dy + dz*dz;
+
+    if (dr2 > rad_ves2) {
+      ptcl.rad = 0.13 * prad;
+    } else {
+      ptcl.rad = prad;
+    }
+  }
+}
+
+bool DrawSys::IsDrawnObject(particle& prtcl) {
   if (!cut_but) {
 #if 0
     bool ret = draw_crit[prtcl.prop];
     if (chem_is_drawn) ret &= prtcl.chem;
 #else
     bool ret = draw_crit[prtcl.prop];
-    if (chem_is_drawn) ret &= prtcl.chem;
-    if (prtcl.prop == 2 && prtcl.chem) ret = false;
+    if (chem_is_drawn) {
+      ret &= prtcl.chem;
+      if (prtcl.prop == 2) ret = true;
+    }
 #endif
     return ret;
   } else {
@@ -459,13 +497,20 @@ void DrawSys::ChangeNormalVector(int i) {
 }
 
 void DrawSys::ChangeCrossSection() {
+#if 0
+  // 断面が一方向に動く場合
+  if (cut_plane <= -0.5) cut_plane += 1.0;
+  if (cut_adv) cut_plane -= 0.04;
+#else
+  // 断面が往復して動く場合
   static float sign = 1.0f;
-  if(cut_plane >= 0.2 ) {
+  if (cut_plane >= 0.5) {
     sign = -1.0f;
-  } else if(cut_plane <= -0.2) {
+  } else if (cut_plane <= -0.5) {
     sign = 1.0f;
   }
   if (cut_adv) cut_plane += sign * 0.03;
+#endif
 }
 
 void DrawSys::Dump2Jpg() {
@@ -485,6 +530,24 @@ void DrawSys::ChangeLookDirection(const int i) {
   } else {
     p_base_z[2] = 1.0;
   }
+}
+
+std::array<float, 3> DrawSys::GetCMPos() const {
+  std::array<float, 3> cmpos;
+  cmpos[0] = cmpos[1] = cmpos[2] = 0.0;
+  int cnt = 0;
+  for (const auto& ptcl : Particle) {
+    if (ptcl.prop == 2 || (ptcl.prop == 1 && ptcl.chem)) {
+      cmpos[0] += ptcl.r[0];
+      cmpos[1] += ptcl.r[1];
+      cmpos[2] += ptcl.r[2];
+      cnt++;
+    }
+  }
+  cmpos[0] /= cnt;
+  cmpos[1] /= cnt;
+  cmpos[2] /= cnt;
+  return cmpos;
 }
 
 bool DrawSys::InitGlew() const {

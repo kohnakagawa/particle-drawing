@@ -18,10 +18,11 @@ class DrawSys{
     return (p == 0) ? 1 : v * power(v, p - 1);
   }
 
-  struct particle{
+  struct particle {
     float r[3];
     int prop;
     bool chem;
+    double rad;
   };
 
   std::vector<std::array<GLfloat, 3>> p_color;
@@ -47,7 +48,7 @@ class DrawSys{
   void RenderString2D(const char*, float, float);
 protected:
   int cur_time, time_step, all_time;
-  bool swt_but, cut_but, cut_adv, crit_out, chem_is_drawn;
+  bool swt_but, cut_but, cut_adv, crit_out, chem_is_drawn, inner_is_drawn;
   int pN;
   std::vector<std::array<GLfloat, 4>> lightpos;
 
@@ -68,13 +69,17 @@ protected:
   void RenderString3D(const char *,const float[3]);
 
   void RenderSphere(const particle& prtcl);
-  bool IsDrawnObject(const particle& prtcl);
+  void ChangeSphereRadiusToDefault();
+  void ChangeSphereRadiusOfInnerDisk();
+  bool IsDrawnObject(particle& prtcl);
 
   void ChangeNormalVector(int i);
   void ChangeCrossSection();
 
   void Dump2Jpg();
   void ChangeLookDirection(const int i);
+
+  std::array<float, 3> GetCMPos() const;
 
 public:
   DrawSys(const std::string& cur_dir_, const bool crit_out_, const int b_time);

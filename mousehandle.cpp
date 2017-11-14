@@ -26,7 +26,7 @@ MouseHandle::MouseHandle(float center_x, float center_y, float center_z,
 
   fovy = fov;
 
-  phi   = M_PI * 0.35;
+  phi   = M_PI * 0.25;
   theta = M_PI * 0.3;
 
   center2eye[0] = eyeDistance * std::cos(phi) * std::sin(theta);

@@ -37,7 +37,7 @@ void AnimeDraw::Display() {
   //Drawxyz();
 
   const float col[][3] {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}};
-  DrawAxis(0.02, 0.3, col);
+  // DrawAxis(0.02, 0.3, col);
   RenderCurTime();
   Dump2Jpg();
   glutSwapBuffers();
@@ -71,7 +71,13 @@ void AnimeDraw::KeyBoard(unsigned char key, int x, int y) {
       break;
     case 'x':
       swt_but  = false;
+#if 0
       cut_adv  = cut_but = true;
+#else
+      // 一時的に断面を固定する。
+      cut_adv = false;
+      cut_but = true;
+#endif
       ChangeNormalVector(0);
       Resize(wid, hei);
       break;

@@ -168,25 +168,57 @@ void DrawSys::InitColor() const {
 
 void DrawSys::FileOpen() {
   boost::filesystem::path path_cur_dir(cur_dir);
-  boost::filesystem::path path_filename("particle_data.txt");
-  boost::filesystem::path path_f_full = path_cur_dir / path_filename;
+  boost::filesystem::path path_xyz("connected_img.xyz");
+  boost::filesystem::path path_ptcl("particle_data.txt");
+  boost::filesystem::path path_xyz_full = path_cur_dir  / path_xyz;
+  boost::filesystem::path path_ptcl_full = path_cur_dir / path_ptcl;
 
-  const auto str = path_f_full.string();
-  fin.open(str);
+  std::string ptcl_data_path_name;
 
-  if (!fin) {
+  if (boost::filesystem::exists(path_xyz_full)) {
+    is_xyz = true;
+    ptcl_data_path_name = path_xyz_full.string();
+  } else if (boost::filesystem::exists(path_ptcl_full)) {
+    is_xyz = false;
+    ptcl_data_path_name = path_ptcl_full.string();
+  } else {
     std::cerr << "File I/O error!" << std::endl;
-    std::cerr << str << " No such file" << std::endl;
     std::cerr << __FILE__ << " " << __LINE__ << std::endl;
     std::exit(1);
   }
+
+  fin.open(ptcl_data_path_name);
 
   if (beg_time >= all_time){
     std::cerr << "beg_time is larger than all_time. \n";
     std::exit(1);
   }
 
-  SkipFileLines(fin, beg_time / time_step, 1);
+  if (!is_xyz) {
+    SkipFileLines(fin, beg_time / time_step, 1);
+  } else {
+    std::cerr << "WARNING: file data skipping is not supported for xyz file format\n";
+  }
+}
+
+DrawSys::particle DrawSys::ParseDataXYZ(const std::string& line) const {
+  std::vector<std::string> vstr;
+  boost::algorithm::split(vstr, line, boost::algorithm::is_space());
+  if (vstr.size() < 5) {
+    std::cerr << "Few input data\n";
+    std::cerr << __FILE__ << " " << __LINE__ << std::endl;
+    std::exit(1);
+  }
+
+  const DrawSys::particle prtcl {
+    {
+      std::stof(vstr[1]), std::stof(vstr[2]), std::stof(vstr[3])
+    },
+    std::stoi(vstr[0]),
+    static_cast<bool>(std::stoi(vstr[4])),
+    prad
+  };
+  return prtcl;
 }
 
 DrawSys::particle DrawSys::ParseDataLine(const std::string& line) const {
@@ -201,14 +233,21 @@ DrawSys::particle DrawSys::ParseDataLine(const std::string& line) const {
     {
       std::stof(v[0]), std::stof(v[1]), std::stof(v[2])
         },
-      std::atoi(v[6].c_str()),
-      static_cast<bool>(std::atoi(v[8].c_str())),
+      std::stoi(v[6]),
+      static_cast<bool>(std::stoi(v[8])),
       prad
   };
   return prtcl;
 }
 
-void DrawSys::LoadParticleDat() {
+void DrawSys::NormalizeBox() {
+  for (int i = 0; i < 3; i++) {
+    box_size[i] *= invL;
+    inv_box_size[i] = 1.0 / box_size[i];
+  }
+}
+
+void DrawSys::LoadParticleDatOld() {
   for (int i = 0; i < pN; i++) {
     std::string line;
     std::getline(fin, line);
@@ -220,12 +259,13 @@ void DrawSys::LoadParticleDat() {
     if (box_size[2] < Particle[i].r[2]) box_size[2] = Particle[i].r[2];
   }
 
-#if 1
+#if 0
   //adjust image to remove PBC
   inv_box_size[0] = 1.0 / box_size[0];
   inv_box_size[1] = 1.0 / box_size[1];
   inv_box_size[2] = 1.0 / box_size[2];
-  float offset[] {7.0, 2.0, -7.0};
+  float offset[] {7.0, 2.0, -6.0};
+
   for (int i = 0; i < pN; i++) {
     Particle[i].r[0] += offset[0];
     Particle[i].r[1] += offset[1];
@@ -237,12 +277,7 @@ void DrawSys::LoadParticleDat() {
   }
 #endif
 
-  box_size[0] *= invL;
-  box_size[1] *= invL;
-  box_size[2] *= invL;
-  inv_box_size[0] = 1.0 / box_size[0];
-  inv_box_size[1] = 1.0 / box_size[1];
-  inv_box_size[2] = 1.0 / box_size[2];
+  NormalizeBox();
 
   for (int i = 0; i < pN; i++) {
     Particle[i].r[0] *= invL;
@@ -256,6 +291,47 @@ void DrawSys::LoadParticleDat() {
 
   if (inner_is_drawn) {
     ChangeSphereRadiusOfInnerDisk();
+  }
+}
+
+void DrawSys::LoadParticleDatXYZ() {
+  Particle.clear();
+
+  std::string line;
+  std::vector<std::string> vstr;
+
+  std::getline(fin, line);
+  const int num_of_lines = std::stoi(line);
+  std::getline(fin, line);
+  for (int i = 0; i < num_of_lines; i++) {
+    std::getline(fin, line);
+    Particle.push_back(ParseDataXYZ(line));
+    Particle[i].rad = prad;
+  }
+
+  box_size[0] = box_size[1] = box_size[2] = scL;
+  NormalizeBox();
+
+  for (auto&& ptcl : Particle) {
+    ptcl.r[0] *= invL;
+    ptcl.r[1] *= invL;
+    ptcl.r[2] *= invL;
+
+    ptcl.r[0] -= box_size[0] * 0.5;
+    ptcl.r[1] -= box_size[1] * 0.5;
+    ptcl.r[2] -= box_size[2] * 0.5;
+  }
+
+  if (inner_is_drawn) {
+    ChangeSphereRadiusOfInnerDisk();
+  }
+}
+
+void DrawSys::LoadParticleDat() {
+  if (is_xyz) {
+    LoadParticleDatXYZ();
+  } else {
+    LoadParticleDatOld();
   }
 }
 
@@ -292,8 +368,9 @@ void DrawSys::DrawCubic() {
 }
 
 void DrawSys::DrawAxis(float d, float s, const float col[][3]) {
-  const float origin[] {-0.95, 0.0, 0.0};
-  // const float origin[] {0.0, 0.0, 0.6};
+  // const float origin[] {-0.95, 0.0, 0.0};
+  const float origin[] {0.0, 0.0, 0.6};
+  // const float origin[] {0.6, 0.0, 0.0};
 
   glPushMatrix();
   glTranslatef(origin[0], origin[1], origin[2]);
@@ -454,6 +531,9 @@ bool DrawSys::IsDrawnObject(particle& prtcl) {
       ret &= prtcl.chem;
       if (prtcl.prop == 2) ret = true;
     }
+
+    // bool ret = false;
+    // if (prtcl.prop == 2 && prtcl.chem == false) ret = true;
 #endif
     return ret;
   } else {
@@ -504,12 +584,12 @@ void DrawSys::ChangeCrossSection() {
 #else
   // 断面が往復して動く場合
   static float sign = 1.0f;
-  if (cut_plane >= 0.5) {
-    sign = -1.0f;
-  } else if (cut_plane <= -0.5) {
+  if (cut_plane >= 0.45) {
     sign = 1.0f;
+  } else if (cut_plane <= -0.45) {
+    sign = -1.0f;
   }
-  if (cut_adv) cut_plane += sign * 0.03;
+  if (cut_adv) cut_plane -= sign * 0.02;
 #endif
 }
 

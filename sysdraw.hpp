@@ -27,6 +27,7 @@ class DrawSys{
 
   std::vector<std::array<GLfloat, 3>> p_color;
 
+  bool is_xyz = false;
 
   std::bitset<15>  draw_crit;
   std::vector<int> draw_crit_mask;
@@ -36,7 +37,7 @@ class DrawSys{
 
   std::array<std::array<int, 2>, 12>  cubeedge;
   std::array<GLfloat, 3> nv;
-  GLfloat cut_plane = 0.5, vertex[8][3];
+  GLfloat cut_plane = 0.0, vertex[8][3];
 
   std::string cur_dir;
 
@@ -46,6 +47,8 @@ class DrawSys{
   void *font = GLUT_BITMAP_TIMES_ROMAN_24;
 
   void RenderString2D(const char*, float, float);
+  void NormalizeBox();
+
 protected:
   int cur_time, time_step, all_time;
   bool swt_but, cut_but, cut_adv, crit_out, chem_is_drawn, inner_is_drawn;
@@ -98,8 +101,11 @@ public:
 
   void FileOpen();
 
+  particle ParseDataXYZ(const std::string& line) const ;
   particle ParseDataLine(const std::string& line) const ;
   void LoadParticleDat();
+  void LoadParticleDatOld();
+  void LoadParticleDatXYZ();
 
   virtual void Timer(int) = 0;
   virtual void Display() = 0;
